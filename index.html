@@ -1619,22 +1619,26 @@ function npUpdatePreview() {
   if (_npEl) { _npEl.value = _npVal; }
 }
 
+// Detectar si es dispositivo táctil (móvil/tablet)
+// Se evalúa una sola vez al cargar
+const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
 // Adjuntar numpad a los campos declarados
 function npAttach(id, label) {
   const el = document.getElementById(id);
   if (!el) return;
+  if (!IS_TOUCH) return; // En PC: comportamiento nativo, sin numpad
   const allowNeg = NP_NEG.has(id);
-  // Evitar teclado del sistema en móvil
   el.setAttribute('readonly', 'readonly');
   el.addEventListener('focus', () => npOpen(el, label, allowNeg));
   el.addEventListener('click', () => npOpen(el, label, allowNeg));
 }
 
 // Adjuntar a los campos de desplazamiento lateral en obstáculos (dinámico)
-// Se hace con delegación cuando se agrega la fila
 function npAttachDl(id) {
   const el = document.getElementById(id);
   if (!el) return;
+  if (!IS_TOUCH) return; // En PC: comportamiento nativo, sin numpad
   el.setAttribute('readonly', 'readonly');
   el.addEventListener('focus', () => npOpen(el, 'Desp. lateral (m)', true));
   el.addEventListener('click', () => npOpen(el, 'Desp. lateral (m)', true));
