@@ -1266,7 +1266,10 @@ function addObsRow() {
   tr.innerHTML = `
     <td style="font-weight:700;color:var(--text2);">${obsCount}</td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-df-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
-    <td><input type="text" id="obs-dl-${obsCount}" placeholder="+ / −" oninput="calcObsRow(${obsCount})" style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;" data-numpad="dl"></td>
+    <td style="position:relative;">
+      <input type="text" id="obs-dl-${obsCount}" placeholder="+ / −" oninput="calcObsRow(${obsCount})" style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;" readonly>
+      <div data-numpad-for="obs-dl-${obsCount}" style="position:absolute;inset:0;cursor:pointer;-webkit-tap-highlight-color:transparent;"></div>
+    </td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-do-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="18" id="obs-h-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
     <td class="calc-cell" id="obs-az-${obsCount}">—</td>
@@ -1641,24 +1644,32 @@ function npAttach(id, label) {
 function initObsDlDelegate() {
   if (!IS_TOUCH) return;
 
-  // Fase de captura: intercepta el touchstart antes que el input
+  // Escuchar en los divs overlay que cubren cada campo obs-dl
+  // El div NO es readonly, recibe el toque normalmente
   document.addEventListener('touchstart', e => {
-    const el = e.target;
-    if (el.dataset && el.dataset.numpad === 'dl') {
+    const div = e.target;
+    if (div.dataset && div.dataset.numpadFor && div.dataset.numpadFor.startsWith('obs-dl-')) {
       e.preventDefault();
-      // Asegurar readonly para bloquear teclado nativo
-      el.setAttribute('readonly', 'readonly');
-      npOpen(el, 'Desp. lateral (m)', true);
+      const inputId = div.dataset.numpadFor;
+      const input = document.getElementById(inputId);
+      if (input) npOpen(input, 'Desp. lateral (m)', true);
     }
-  }, { capture: true, passive: false });
+  }, { passive: false });
+
+  // Fallback click
+  document.addEventListener('click', e => {
+    const div = e.target;
+    if (div.dataset && div.dataset.numpadFor && div.dataset.numpadFor.startsWith('obs-dl-')) {
+      const input = document.getElementById(div.dataset.numpadFor);
+      if (input) npOpen(input, 'Desp. lateral (m)', true);
+    }
+  });
 }
 
 // npAttachDl: aplica readonly al campo cuando se crea la fila
 // (necesario para que el campo ya tenga readonly antes del primer toque)
 function npAttachDl(id) {
-  if (!IS_TOUCH) return;
-  const el = document.getElementById(id);
-  if (el) el.setAttribute('readonly', 'readonly');
+  // readonly ya está puesto en el HTML del template — nada que hacer
 }
 
 window.addEventListener('load', () => {
@@ -1666,6 +1677,17 @@ window.addEventListener('load', () => {
   npAttach('lon',   'Longitud (°)');
   npAttach('alpha', 'Acimut α (°)');
   initObsDlDelegate();
+
+  // En PC: los divs overlay deben hacer foco en el input real al clickear
+  if (!IS_TOUCH) {
+    document.addEventListener('click', e => {
+      const div = e.target;
+      if (div.dataset && div.dataset.numpadFor) {
+        const input = document.getElementById(div.dataset.numpadFor);
+        if (input) { input.removeAttribute('readonly'); input.focus(); }
+      }
+    });
+  }
 });
 </script>
 
