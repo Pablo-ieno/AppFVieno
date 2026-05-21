@@ -248,6 +248,59 @@
   details { margin-top: 8px; }
   summary { cursor: pointer; color: var(--text2); font-size: 13px; padding: 4px 0; }
   .punto-list { margin: 4px 0; font-size: 13px; color: var(--text2); }
+
+  /* ═══ TECLADO NUMÉRICO CUSTOM (solo móvil, para campos con negativo) ═══ */
+  #numpad-overlay {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 9999;
+    background: #1a1d27;
+    border-top: 2px solid var(--accent);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+    user-select: none; -webkit-user-select: none;
+  }
+  #numpad-overlay.visible { display: block; }
+  #numpad-header {
+    display: flex; align-items: center;
+    padding: 4px 10px; gap: 8px;
+    background: #13151f;
+    border-bottom: 1px solid var(--border);
+    min-height: 34px;
+  }
+  #numpad-label {
+    font-size: 11px; color: var(--text2); font-weight: 600;
+    letter-spacing: 0.04em; white-space: nowrap;
+  }
+  #numpad-preview {
+    flex: 1; text-align: right;
+    font-size: 16px; font-weight: 700; font-family: monospace;
+    color: var(--text); overflow: hidden; text-overflow: ellipsis;
+  }
+  #numpad-preview.ph { color: var(--text3); }
+  #numpad-close {
+    background: none; border: none; color: var(--text2);
+    font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;
+    flex-shrink: 0;
+  }
+  #numpad-keys {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+  }
+  .npk {
+    background: #22263a; border: none; color: var(--text);
+    font-size: 18px; font-weight: 500;
+    padding: 12px 0; line-height: 1;
+    cursor: pointer; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .npk:active { background: #2e3352; }
+  .npk.act  { background: #2e3352; color: var(--text2); font-size: 13px; }
+  .npk.act:active { background: #3a4060; }
+  .npk.sign { color: var(--accent); font-size: 13px; font-weight: 700; }
+  .npk.ok   { background: var(--accent); color: #000; font-size: 14px; font-weight: 700; }
+  .npk.ok:active { background: #d97706; }
+  body.np-open { padding-bottom: 190px; }
 </style>
 </head>
 <body>
@@ -1213,7 +1266,7 @@ function addObsRow() {
   tr.innerHTML = `
     <td style="font-weight:700;color:var(--text2);">${obsCount}</td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-df-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
-    <td><input type="number" inputmode="decimal" step="0.1" placeholder="11.5" id="obs-dl-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
+    <td><input type="text" id="obs-dl-${obsCount}" placeholder="+ / −" oninput="calcObsRow(${obsCount})" style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;"></td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-do-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="18" id="obs-h-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
     <td class="calc-cell" id="obs-az-${obsCount}">—</td>
@@ -1222,6 +1275,7 @@ function addObsRow() {
   `;
   tbody.appendChild(tr);
   calcObsRow(obsCount);
+  npAttachDl(`obs-dl-${obsCount}`);
 }
 
 function removeObsRow(id) {
@@ -1231,7 +1285,8 @@ function removeObsRow(id) {
 
 function calcObsRow(id) {
   const df  = parseFloat(document.getElementById(`obs-df-${id}`)?.value);
-  const dl  = parseFloat(document.getElementById(`obs-dl-${id}`)?.value);
+  const dlRaw = (document.getElementById(`obs-dl-${id}`)?.value||'').replace(',','.');
+  const dl  = parseFloat(dlRaw);
   const dob = parseFloat(document.getElementById(`obs-do-${id}`)?.value);
   const hob = parseFloat(document.getElementById(`obs-h-${id}`)?.value);
   const hpanel = parseFloat(document.getElementById('h-panel').value) || 4;
@@ -1467,5 +1522,130 @@ window.addEventListener('load', () => {
   }
 });
 </script>
+
+<!-- ═══ TECLADO NUMÉRICO CUSTOM ═══ -->
+<div id="numpad-overlay">
+  <div id="numpad-header">
+    <span id="numpad-label">—</span>
+    <span id="numpad-preview" class="ph">—</span>
+    <button id="numpad-close" onclick="npClose()">✕</button>
+  </div>
+  <div id="numpad-keys">
+    <button class="npk" onclick="npKey('7')">7</button>
+    <button class="npk" onclick="npKey('8')">8</button>
+    <button class="npk" onclick="npKey('9')">9</button>
+    <button class="npk act" onclick="npDel()">⌫</button>
+
+    <button class="npk" onclick="npKey('4')">4</button>
+    <button class="npk" onclick="npKey('5')">5</button>
+    <button class="npk" onclick="npKey('6')">6</button>
+    <button class="npk sign" id="npk-sign" onclick="npSign()">+/−</button>
+
+    <button class="npk" onclick="npKey('1')">1</button>
+    <button class="npk" onclick="npKey('2')">2</button>
+    <button class="npk" onclick="npKey('3')">3</button>
+    <button class="npk act" onclick="npKey('.')">.</button>
+
+    <button class="npk act" onclick="npClear()">C</button>
+    <button class="npk" onclick="npKey('0')">0</button>
+    <button class="npk act" onclick="npKey('00')">00</button>
+    <button class="npk ok" onclick="npConfirm()">OK ✓</button>
+  </div>
+</div>
+
+<script>
+// ═══ LÓGICA TECLADO NUMÉRICO CUSTOM ═══
+let _npEl  = null;   // input activo
+let _npVal = '';     // valor en construcción
+// IDs que admiten negativo
+const NP_NEG = new Set(['lat','lon','alpha']);
+
+function npOpen(el, label, allowNeg) {
+  _npEl  = el;
+  _npVal = el.value.trim();
+  document.getElementById('numpad-label').textContent   = label || '—';
+  document.getElementById('npk-sign').style.visibility = allowNeg ? 'visible' : 'hidden';
+  npUpdatePreview();
+  document.getElementById('numpad-overlay').classList.add('visible');
+  document.body.classList.add('np-open');
+  // Scroll al campo
+  setTimeout(() => el.scrollIntoView({ behavior:'smooth', block:'center' }), 80);
+}
+
+function npClose() {
+  if (_npEl) {
+    _npEl.value = _npVal;
+    _npEl.dispatchEvent(new Event('input', { bubbles: true }));
+    _npEl.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  document.getElementById('numpad-overlay').classList.remove('visible');
+  document.body.classList.remove('np-open');
+  _npEl = null;
+}
+
+function npConfirm() { npClose(); }
+
+function npKey(ch) {
+  if (ch === '.' && _npVal.includes('.')) return;
+  if (ch === '00') {
+    if (_npVal === '' || _npVal === '-') return;
+  }
+  if (ch === '0' && (_npVal === '0' || _npVal === '-0')) {
+    _npVal += '.'; npUpdatePreview(); return;
+  }
+  _npVal += ch;
+  npUpdatePreview();
+}
+
+function npDel()   { _npVal = _npVal.slice(0,-1); npUpdatePreview(); }
+function npClear() { _npVal = ''; npUpdatePreview(); }
+
+function npSign() {
+  if (_npVal.startsWith('-')) { _npVal = _npVal.slice(1); }
+  else if (_npVal !== '' && _npVal !== '0') { _npVal = '-' + _npVal; }
+  else { _npVal = '-'; }
+  npUpdatePreview();
+}
+
+function npUpdatePreview() {
+  const prev = document.getElementById('numpad-preview');
+  if (_npVal === '' || _npVal === '-') {
+    prev.textContent = _npVal || '—';
+    prev.classList.add('ph');
+  } else {
+    prev.textContent = _npVal;
+    prev.classList.remove('ph');
+  }
+  if (_npEl) { _npEl.value = _npVal; }
+}
+
+// Adjuntar numpad a los campos declarados
+function npAttach(id, label) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const allowNeg = NP_NEG.has(id);
+  // Evitar teclado del sistema en móvil
+  el.setAttribute('readonly', 'readonly');
+  el.addEventListener('focus', () => npOpen(el, label, allowNeg));
+  el.addEventListener('click', () => npOpen(el, label, allowNeg));
+}
+
+// Adjuntar a los campos de desplazamiento lateral en obstáculos (dinámico)
+// Se hace con delegación cuando se agrega la fila
+function npAttachDl(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('readonly', 'readonly');
+  el.addEventListener('focus', () => npOpen(el, 'Desp. lateral (m)', true));
+  el.addEventListener('click', () => npOpen(el, 'Desp. lateral (m)', true));
+}
+
+window.addEventListener('load', () => {
+  npAttach('lat',   'Latitud φ (°)');
+  npAttach('lon',   'Longitud (°)');
+  npAttach('alpha', 'Acimut α (°)');
+});
+</script>
+
 </body>
 </html>
