@@ -1623,31 +1623,49 @@ function npUpdatePreview() {
 // Se evalúa una sola vez al cargar
 const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-// Adjuntar numpad a los campos declarados
+// Adjuntar numpad a un campo fijo (lat, lon, alpha)
 function npAttach(id, label) {
   const el = document.getElementById(id);
   if (!el) return;
-  if (!IS_TOUCH) return; // En PC: comportamiento nativo, sin numpad
+  if (!IS_TOUCH) return;
   const allowNeg = NP_NEG.has(id);
   el.setAttribute('readonly', 'readonly');
-  el.addEventListener('focus', () => npOpen(el, label, allowNeg));
-  el.addEventListener('click', () => npOpen(el, label, allowNeg));
+  const open = () => npOpen(el, label, allowNeg);
+  el.addEventListener('touchend', e => { e.preventDefault(); open(); });
+  el.addEventListener('click', open);
 }
 
-// Adjuntar a los campos de desplazamiento lateral en obstáculos (dinámico)
-function npAttachDl(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (!IS_TOUCH) return; // En PC: comportamiento nativo, sin numpad
-  el.setAttribute('readonly', 'readonly');
-  el.addEventListener('focus', () => npOpen(el, 'Desp. lateral (m)', true));
-  el.addEventListener('click', () => npOpen(el, 'Desp. lateral (m)', true));
+// Para obs-dl: delegación en el tbody, captura cualquier fila presente o futura
+function initObsDlDelegate() {
+  if (!IS_TOUCH) return;
+  const tbody = document.getElementById('obs-body');
+  if (!tbody) return;
+  tbody.addEventListener('touchend', e => {
+    const el = e.target;
+    if (el.tagName === 'INPUT' && el.id && el.id.startsWith('obs-dl-')) {
+      e.preventDefault();
+      // Poner readonly la primera vez que se toca
+      if (!el.hasAttribute('readonly')) el.setAttribute('readonly', 'readonly');
+      npOpen(el, 'Desp. lateral (m)', true);
+    }
+  });
+  tbody.addEventListener('click', e => {
+    const el = e.target;
+    if (el.tagName === 'INPUT' && el.id && el.id.startsWith('obs-dl-')) {
+      if (!el.hasAttribute('readonly')) el.setAttribute('readonly', 'readonly');
+      npOpen(el, 'Desp. lateral (m)', true);
+    }
+  });
 }
+
+// npAttachDl ya no hace nada (la delegación cubre todos los campos)
+function npAttachDl(id) { /* delegación en initObsDlDelegate */ }
 
 window.addEventListener('load', () => {
   npAttach('lat',   'Latitud φ (°)');
   npAttach('lon',   'Longitud (°)');
   npAttach('alpha', 'Acimut α (°)');
+  initObsDlDelegate();
 });
 </script>
 
