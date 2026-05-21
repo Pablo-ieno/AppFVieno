@@ -4,11 +4,11 @@
 // primera carga.
 // ============================================================
 
-const CACHE_NAME = 'calc-fv-v1';
+const CACHE_NAME = 'calc-fv-v2';
 
 // Archivos que se cachean en la instalación
 const PRECACHE_URLS = [
-  './calculadora_fotovoltaica_13.html',
+  './calculadora_fotovoltaica_15.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
@@ -53,7 +53,6 @@ self.addEventListener('fetch', event => {
       if (cached) return cached;
 
       return fetch(event.request).then(response => {
-        // Solo cachear respuestas válidas del mismo origen
         if (
           response.ok &&
           response.type === 'basic'
@@ -65,7 +64,7 @@ self.addEventListener('fetch', event => {
       });
     }).catch(() =>
       // Fallback offline: devolver el HTML principal
-      caches.match('./calculadora_fotovoltaica_13.html')
+      caches.match('./calculadora_fotovoltaica_15.html')
     )
   );
 });
