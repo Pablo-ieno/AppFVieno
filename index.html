@@ -368,6 +368,7 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="calcM1()">Calcular Módulo 1</button>
+        <button class="btn btn-secondary" id="btn-export-m1" style="display:none" onclick="exportPDF('m1')">⬇ Exportar PDF</button>
       </div>
     </div>
 
@@ -502,6 +503,7 @@
       <div class="btn-row">
         <button class="btn btn-secondary btn-sm" onclick="addSectorRow()">+ Agregar sector</button>
         <button class="btn btn-primary" onclick="calcM2()">Recalcular</button>
+        <button class="btn btn-secondary" id="btn-export-m2" style="display:none" onclick="exportPDF('m2')">⬇ Exportar PDF</button>
       </div>
 
       <!-- Resultados M2 manual -->
@@ -549,6 +551,7 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="calcCombinado()">Calcular resultado combinado</button>
+        <button class="btn btn-secondary" id="btn-export-res" style="display:none" onclick="exportPDF('res')">⬇ Exportar PDF</button>
       </div>
     </div>
     <div id="result-combinado"></div>
@@ -1251,6 +1254,7 @@ function calcM1() {
     `<span class="badge badge-${status}">${status==='ok'?'✓':'✗'} ${perdidas.toFixed(2)}% — Criterio ≤10%: ${status==='ok'?'CUMPLE':'NO CUMPLE'}</span>`;
 
   document.getElementById('result-m1').style.display = 'block';
+  document.getElementById('btn-export-m1').style.display = 'inline-block';
 }
 
 // ============================================================
@@ -1266,9 +1270,13 @@ function addObsRow() {
   tr.innerHTML = `
     <td style="font-weight:700;color:var(--text2);">${obsCount}</td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-df-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
-    <td style="position:relative;">
-      <input type="text" id="obs-dl-${obsCount}" placeholder="+ / −" oninput="calcObsRow(${obsCount})" style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;" readonly>
-      <div data-numpad-for="obs-dl-${obsCount}" style="position:absolute;inset:0;cursor:pointer;-webkit-tap-highlight-color:transparent;"></div>
+    <td>
+      <button type="button" id="obs-dl-btn-${obsCount}"
+        onclick="npOpenDl(${obsCount})"
+        style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text3);font-size:13px;text-align:left;cursor:pointer;min-height:31px;-webkit-tap-highlight-color:transparent;">
+        + / −
+      </button>
+      <input type="hidden" id="obs-dl-${obsCount}" value="" oninput="calcObsRow(${obsCount})">
     </td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-do-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="18" id="obs-h-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
@@ -1418,6 +1426,7 @@ function calcM2() {
   }
 
   document.getElementById('result-m2-boxes').style.display = 'block';
+  document.getElementById('btn-export-m2').style.display = 'inline-block';
 }
 
 // ============================================================
@@ -1455,6 +1464,7 @@ function calcCombinado() {
   const status2 = m2p <= 10  ? 'ok' : 'bad';
   const statusT = perdidasTotales <= 15 ? 'ok' : 'bad';
 
+  document.getElementById('btn-export-res').style.display = 'inline-block';
   document.getElementById('result-combinado').innerHTML = `
     <div class="combined-box">
       <div class="combined-title">📊 Resultado final</div>
@@ -1557,26 +1567,130 @@ window.addEventListener('load', () => {
 </div>
 
 <script>
+
+// ═══ EXPORTAR A PDF ═══
+function exportPDF(modulo) {
+  const titulos = { m1: 'Módulo 1 — Orientación e Inclinación', m2: 'Módulo 2 — Sombreado', res: 'Resultado Combinado' };
+  const panel = document.getElementById('panel-' + modulo);
+
+  // Clonar solo las cards de resultado (las que tienen contenido calculado)
+  const cards = [];
+  if (modulo === 'm1') {
+    const r = document.getElementById('result-m1');
+    if (r && r.style.display !== 'none') cards.push(r.outerHTML);
+  } else if (modulo === 'm2') {
+    // Incluir tabla de obstáculos (con valores) y resultado
+    const obsCard = panel.querySelector('.card:nth-child(2)');
+    if (obsCard) cards.push(obsCard.outerHTML);
+    const res = document.getElementById('result-m2-boxes');
+    if (res && res.style.display !== 'none') cards.push(`<div class="card">${res.innerHTML}</div>`);
+  } else if (modulo === 'res') {
+    const r = document.getElementById('result-combinado');
+    if (r && r.innerHTML.trim()) cards.push(r.outerHTML);
+  }
+
+  if (!cards.length) { alert('Primero calculá los resultados.'); return; }
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>${titulos[modulo]} — Calculadora FV UTN FRC</title>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: white; color: #1e293b;
+         font-size: 13px; line-height: 1.6; margin: 0; padding: 20px; }
+  h1 { font-size: 18px; color: #1a365d; border-bottom: 3px solid #f59e0b;
+       padding-bottom: 8px; margin-bottom: 16px; }
+  .subtitulo { font-size: 12px; color: #718096; margin-bottom: 24px; }
+  .card { background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+          padding: 16px; margin-bottom: 14px; break-inside: avoid; }
+  .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                letter-spacing: 0.08em; color: #f59e0b; margin-bottom: 12px; }
+  .step-title { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+                letter-spacing: 0.06em; margin-bottom: 4px; margin-top: 10px; }
+  .formula { font-family: monospace; font-size: 12px; background: #f8fafc;
+             border-left: 3px solid #f59e0b; padding: 6px 10px; border-radius: 0 5px 5px 0;
+             margin: 3px 0; color: #475569; }
+  .result-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+                padding: 12px; margin-top: 10px; }
+  .result-row { display: flex; justify-content: space-between; align-items: center;
+                padding: 5px 0; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+  .result-row:last-child { border-bottom: none; }
+  .result-row .label { color: #475569; }
+  .result-row .value { font-weight: 600; font-family: monospace; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px;
+           font-size: 11px; font-weight: 700; }
+  .badge-ok  { background: #c6f6d5; color: #276749; }
+  .badge-bad { background: #fed7d7; color: #9b2c2c; }
+  .badge-warn { background: #fefcbf; color: #7b341e; }
+  .big-number { font-size: 28px; font-weight: 800; font-family: monospace; }
+  .combined-box { background: white; border: 1px solid #f59e0b; border-radius: 10px; padding: 16px; }
+  .combined-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: #1a365d; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  th { background: #1a365d; color: white; padding: 6px 8px; text-align: left; font-size: 11px; }
+  td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .calc-cell { font-family: monospace; color: #f59e0b; font-weight: 600; }
+  input { border: none; background: transparent; color: #1e293b; font-size: 12px; width: 100%; }
+  button { display: none; }
+  .info-box, .warn-box { display: none; }
+  .remove-btn { display: none; }
+  @media print {
+    body { padding: 10px; }
+    .card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<h1>☀️ Calculadora Fotovoltaica — ${titulos[modulo]}</h1>
+<div class="subtitulo">UTN FRC · Instalación de Sistemas Solares · Ing. Bordino / Téc. Méndez · ${new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+${cards.join('')}
+<script>window.onload = () => { window.print(); }<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
 // ═══ LÓGICA TECLADO NUMÉRICO CUSTOM ═══
 let _npEl  = null;   // input activo
 let _npVal = '';     // valor en construcción
 // IDs que admiten negativo
 const NP_NEG = new Set(['lat','lon','alpha']);
 
+// _npOnConfirm: función opcional que se llama al confirmar en lugar del flujo normal
+let _npOnConfirm = null;
+
 function npOpen(el, label, allowNeg) {
   _npEl  = el;
   _npVal = el.value.trim();
+  _npOnConfirm = null;
   document.getElementById('numpad-label').textContent   = label || '—';
   document.getElementById('npk-sign').style.visibility = allowNeg ? 'visible' : 'hidden';
   npUpdatePreview();
   document.getElementById('numpad-overlay').classList.add('visible');
   document.body.classList.add('np-open');
-  // Scroll al campo
   setTimeout(() => el.scrollIntoView({ behavior:'smooth', block:'center' }), 80);
 }
 
+function npOpenWithCallback(initialValue, label, allowNeg, onConfirm) {
+  _npEl  = null;
+  _npVal = initialValue;
+  _npOnConfirm = onConfirm;
+  document.getElementById('numpad-label').textContent   = label || '—';
+  document.getElementById('npk-sign').style.visibility = allowNeg ? 'visible' : 'hidden';
+  npUpdatePreview();
+  document.getElementById('numpad-overlay').classList.add('visible');
+  document.body.classList.add('np-open');
+}
+
 function npClose() {
-  if (_npEl) {
+  if (_npOnConfirm) {
+    // Modo callback (ej: button+hidden para obs-dl)
+    _npOnConfirm(_npVal);
+  } else if (_npEl) {
+    // Modo normal: input real
     _npEl.value = _npVal;
     _npEl.dispatchEvent(new Event('input', { bubbles: true }));
     _npEl.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1584,6 +1698,7 @@ function npClose() {
   document.getElementById('numpad-overlay').classList.remove('visible');
   document.body.classList.remove('np-open');
   _npEl = null;
+  _npOnConfirm = null;
 }
 
 function npConfirm() { npClose(); }
@@ -1638,38 +1753,33 @@ function npAttach(id, label) {
   el.addEventListener('click', () => npOpen(el, label, allowNeg));
 }
 
-// Para obs-dl: delegación global con data-numpad="dl"
-// El campo se marca con data-numpad en el HTML del template,
-// así el navegador nunca puede abrir su teclado nativo.
 function initObsDlDelegate() {
-  if (!IS_TOUCH) return;
-
-  // Escuchar en los divs overlay que cubren cada campo obs-dl
-  // El div NO es readonly, recibe el toque normalmente
-  document.addEventListener('touchstart', e => {
-    const div = e.target;
-    if (div.dataset && div.dataset.numpadFor && div.dataset.numpadFor.startsWith('obs-dl-')) {
-      e.preventDefault();
-      const inputId = div.dataset.numpadFor;
-      const input = document.getElementById(inputId);
-      if (input) npOpen(input, 'Desp. lateral (m)', true);
-    }
-  }, { passive: false });
-
-  // Fallback click
-  document.addEventListener('click', e => {
-    const div = e.target;
-    if (div.dataset && div.dataset.numpadFor && div.dataset.numpadFor.startsWith('obs-dl-')) {
-      const input = document.getElementById(div.dataset.numpadFor);
-      if (input) npOpen(input, 'Desp. lateral (m)', true);
-    }
-  });
+  // No necesario — se usa button+hidden input
 }
 
 // npAttachDl: aplica readonly al campo cuando se crea la fila
 // (necesario para que el campo ya tenga readonly antes del primer toque)
 function npAttachDl(id) {
-  // readonly ya está puesto en el HTML del template — nada que hacer
+  // No necesario — se usa button+hidden input
+}
+
+// Abre el numpad para el campo de desplazamiento lateral
+function npOpenDl(rowId) {
+  const hidden = document.getElementById('obs-dl-' + rowId);
+  const btn    = document.getElementById('obs-dl-btn-' + rowId);
+  if (!hidden || !btn) return;
+
+  npOpenWithCallback(
+    hidden.value,           // valor inicial
+    'Desp. lateral (m)',    // label
+    true,                   // permite negativo
+    (val) => {              // callback al confirmar
+      hidden.value = val;
+      btn.textContent = (val === '' || val === '-') ? '+ / −' : val;
+      btn.style.color = (val === '' || val === '-') ? 'var(--text3)' : 'var(--text)';
+      calcObsRow(rowId);
+    }
+  );
 }
 
 window.addEventListener('load', () => {
@@ -1677,17 +1787,6 @@ window.addEventListener('load', () => {
   npAttach('lon',   'Longitud (°)');
   npAttach('alpha', 'Acimut α (°)');
   initObsDlDelegate();
-
-  // En PC: los divs overlay deben hacer foco en el input real al clickear
-  if (!IS_TOUCH) {
-    document.addEventListener('click', e => {
-      const div = e.target;
-      if (div.dataset && div.dataset.numpadFor) {
-        const input = document.getElementById(div.dataset.numpadFor);
-        if (input) { input.removeAttribute('readonly'); input.focus(); }
-      }
-    });
-  }
 });
 </script>
 
