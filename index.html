@@ -1266,7 +1266,7 @@ function addObsRow() {
   tr.innerHTML = `
     <td style="font-weight:700;color:var(--text2);">${obsCount}</td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-df-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
-    <td><input type="text" id="obs-dl-${obsCount}" placeholder="+ / −" oninput="calcObsRow(${obsCount})" style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;"></td>
+    <td><input type="text" id="obs-dl-${obsCount}" placeholder="+ / −" oninput="calcObsRow(${obsCount})" style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;" data-numpad="dl"></td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-do-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
     <td><input type="number" inputmode="decimal" step="0.1" placeholder="18" id="obs-h-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
     <td class="calc-cell" id="obs-az-${obsCount}">—</td>
@@ -1630,36 +1630,36 @@ function npAttach(id, label) {
   if (!IS_TOUCH) return;
   const allowNeg = NP_NEG.has(id);
   el.setAttribute('readonly', 'readonly');
-  const open = () => npOpen(el, label, allowNeg);
-  el.addEventListener('touchend', e => { e.preventDefault(); open(); });
-  el.addEventListener('click', open);
+  const open = (e) => { e.preventDefault(); e.stopPropagation(); npOpen(el, label, allowNeg); };
+  el.addEventListener('touchstart', open, { passive: false });
+  el.addEventListener('click', () => npOpen(el, label, allowNeg));
 }
 
-// Para obs-dl: delegación en el tbody, captura cualquier fila presente o futura
+// Para obs-dl: delegación global con data-numpad="dl"
+// El campo se marca con data-numpad en el HTML del template,
+// así el navegador nunca puede abrir su teclado nativo.
 function initObsDlDelegate() {
   if (!IS_TOUCH) return;
-  const tbody = document.getElementById('obs-body');
-  if (!tbody) return;
-  tbody.addEventListener('touchend', e => {
+
+  // Fase de captura: intercepta el touchstart antes que el input
+  document.addEventListener('touchstart', e => {
     const el = e.target;
-    if (el.tagName === 'INPUT' && el.id && el.id.startsWith('obs-dl-')) {
+    if (el.dataset && el.dataset.numpad === 'dl') {
       e.preventDefault();
-      // Poner readonly la primera vez que se toca
-      if (!el.hasAttribute('readonly')) el.setAttribute('readonly', 'readonly');
+      // Asegurar readonly para bloquear teclado nativo
+      el.setAttribute('readonly', 'readonly');
       npOpen(el, 'Desp. lateral (m)', true);
     }
-  });
-  tbody.addEventListener('click', e => {
-    const el = e.target;
-    if (el.tagName === 'INPUT' && el.id && el.id.startsWith('obs-dl-')) {
-      if (!el.hasAttribute('readonly')) el.setAttribute('readonly', 'readonly');
-      npOpen(el, 'Desp. lateral (m)', true);
-    }
-  });
+  }, { capture: true, passive: false });
 }
 
-// npAttachDl ya no hace nada (la delegación cubre todos los campos)
-function npAttachDl(id) { /* delegación en initObsDlDelegate */ }
+// npAttachDl: aplica readonly al campo cuando se crea la fila
+// (necesario para que el campo ya tenga readonly antes del primer toque)
+function npAttachDl(id) {
+  if (!IS_TOUCH) return;
+  const el = document.getElementById(id);
+  if (el) el.setAttribute('readonly', 'readonly');
+}
 
 window.addEventListener('load', () => {
   npAttach('lat',   'Latitud φ (°)');
