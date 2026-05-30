@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Calc. FV">
+<meta name="description" content="Calculadora de pérdidas por orientación, inclinación y sombreado para sistemas fotovoltaicos.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Calculadora Fotovoltaica</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3352;
+    --accent: #f59e0b;
+    --accent2: #3b82f6;
+    --accent3: #10b981;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface2: #f8fafc;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text2: #475569;
+      --text3: #94a3b8;
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+  .logo {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), #f97316);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  header h1 { font-size: 17px; font-weight: 700; }
+  header p { font-size: 12px; color: var(--text2); }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  .tabs {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1; padding: 10px; border: none; border-radius: 8px;
+    background: transparent; color: var(--text2);
+    cursor: pointer; font-size: 14px; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--accent);
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .field input, .field select {
+    padding: 9px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .field .hint { font-size: 11px; color: var(--text3); }
+  .btn {
+    padding: 10px 20px;
+    border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #d97706; }
+  .btn-secondary { background: var(--accent2); color: #fff; }
+  .btn-secondary:hover { background: #2563eb; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .result-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+  .result-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-row .label { color: var(--text2); }
+  .result-row .value { font-weight: 600; font-family: monospace; font-size: 14px; }
+  .badge {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 20px; font-size: 12px; font-weight: 700;
+  }
+  .badge-ok { background: rgba(16,185,129,0.15); color: var(--accent3); }
+  .badge-warn { background: rgba(245,158,11,0.15); color: var(--accent); }
+  .badge-bad { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .formula {
+    font-family: monospace; font-size: 13px;
+    background: var(--surface2); border-left: 3px solid var(--accent);
+    padding: 8px 12px; border-radius: 0 6px 6px 0;
+    margin: 4px 0; color: var(--text2);
+  }
+  .step-title {
+    font-size: 12px; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 6px; margin-top: 12px;
+  }
+
+  /* ---- MÓDULO 2: INGRESO DE OBSTÁCULOS ---- */
+  .obs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .obs-table th {
+    text-align: left; padding: 8px 6px;
+    border-bottom: 2px solid var(--border);
+    color: var(--text2); font-weight: 600; font-size: 12px;
+  }
+  .obs-table td { padding: 6px; vertical-align: middle; }
+  .obs-table input {
+    width: 100%; padding: 5px 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 13px;
+  }
+  .obs-table input:focus { outline: none; border-color: var(--accent); }
+  .obs-table .calc-cell {
+    font-family: monospace; font-size: 13px; color: var(--accent); font-weight: 600;
+  }
+  .remove-btn {
+    background: none; border: none; color: var(--danger);
+    cursor: pointer; font-size: 16px; padding: 2px 6px;
+  }
+  .sector-badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 4px; font-size: 12px; font-weight: 700;
+    background: rgba(59,130,246,0.15); color: var(--accent2);
+  }
+
+  /* ---- TABLA DE SECTORES CUBIERTOS ---- */
+  .sector-coverage-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .sector-coverage-table th {
+    text-align: center; padding: 7px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2); font-size: 12px; font-weight: 600;
+  }
+  .sector-coverage-table td {
+    padding: 6px 8px; text-align: center;
+    border: 1px solid var(--border);
+  }
+  .sector-coverage-table select {
+    padding: 3px 6px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text); font-size: 12px;
+  }
+  .highlight-row { background: rgba(245,158,11,0.06); }
+
+  /* ---- RESULTADO COMBINADO ---- */
+  .combined-box {
+    background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(59,130,246,0.08));
+    border: 1px solid var(--accent);
+    border-radius: 12px; padding: 20px; margin-top: 16px;
+  }
+  .combined-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+  .big-number { font-size: 32px; font-weight: 800; font-family: monospace; }
+
+  /* ---- SPINNER ---- */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .info-box {
+    background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text2);
+    margin-bottom: 12px;
+  }
+  .warn-box {
+    background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text2);
+    margin-bottom: 12px;
+  }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: var(--text2); font-size: 13px; padding: 4px 0; }
+  .punto-list { margin: 4px 0; font-size: 13px; color: var(--text2); }
+
+  /* ═══ TECLADO NUMÉRICO CUSTOM (solo móvil, para campos con negativo) ═══ */
+  #numpad-overlay {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 9999;
+    background: #1a1d27;
+    border-top: 2px solid var(--accent);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+    user-select: none; -webkit-user-select: none;
+  }
+  #numpad-overlay.visible { display: block; }
+  #numpad-header {
+    display: flex; align-items: center;
+    padding: 4px 10px; gap: 8px;
+    background: #13151f;
+    border-bottom: 1px solid var(--border);
+    min-height: 34px;
+  }
+  #numpad-label {
+    font-size: 11px; color: var(--text2); font-weight: 600;
+    letter-spacing: 0.04em; white-space: nowrap;
+  }
+  #numpad-preview {
+    flex: 1; text-align: right;
+    font-size: 16px; font-weight: 700; font-family: monospace;
+    color: var(--text); overflow: hidden; text-overflow: ellipsis;
+  }
+  #numpad-preview.ph { color: var(--text3); }
+  #numpad-close {
+    background: none; border: none; color: var(--text2);
+    font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;
+    flex-shrink: 0;
+  }
+  #numpad-keys {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+  }
+  .npk {
+    background: #22263a; border: none; color: var(--text);
+    font-size: 18px; font-weight: 500;
+    padding: 12px 0; line-height: 1;
+    cursor: pointer; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .npk:active { background: #2e3352; }
+  .npk.act  { background: #2e3352; color: var(--text2); font-size: 13px; }
+  .npk.act:active { background: #3a4060; }
+  .npk.sign { color: var(--accent); font-size: 13px; font-weight: 700; }
+  .npk.ok   { background: var(--accent); color: #000; font-size: 14px; font-weight: 700; }
+  .npk.ok:active { background: #d97706; }
+  body.np-open { padding-bottom: 190px; }
+
+  /* ---- AUTOCOMPLETE LOCATION SEARCH ---- */
+  .location-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background-color 0.15s;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .location-item:hover {
+    background: var(--surface2);
+  }
+  .location-item:last-child {
+    border-bottom: none;
+  }
+  .location-item-name {
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .location-item-coords {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+    font-family: monospace;
+  }
+  .location-item-loading {
+    padding: 10px 12px;
+    color: var(--text2);
+    font-size: 12px;
+    font-style: italic;
+  }
+  .location-item-error {
+    padding: 10px 12px;
+    color: var(--danger);
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">☀️</div>
+  <div>
+    <h1>Calculadora Fotovoltaica</h1>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('m1')">Módulo 1 — Orientación e Inclinación</button>
+    <button class="tab" onclick="switchTab('m2')">Módulo 2 — Sombreado</button>
+    <button class="tab" onclick="switchTab('res')">Resultado Combinado</button>
+  </div>
+
+  <!-- ===== MÓDULO 1 ===== -->
+  <div id="panel-m1" class="panel active">
+
+    <div class="card">
+      <div class="card-title">📍 Ubicación y datos solares</div>
+      
+      <!-- BUSCADOR DE UBICACIÓN -->
+      <div class="field" style="margin-bottom: 14px;">
+        <label>Buscar ubicación en el mundo</label>
+        <div style="position: relative;">
+          <input type="text" inputmode="text" id="location-search" placeholder="Ej: Córdoba, Argentina  |  Madrid, España  |  São Paulo, Brasil" 
+                 style="width: 100%; padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px;"
+                 oninput="searchLocations(this.value)">
+          <div id="autocomplete-results" style="
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: var(--shadow);
+          "></div>
+        </div>
+        <span class="hint">Escribe una ciudad o provincia para cargar automáticamente latitud y longitud</span>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Latitud φ (°)</label>
+          <input type="text" inputmode="decimal" id="lat" placeholder="-31.42">
+          <span class="hint">Negativo en hemisferio sur</span>
+        </div>
+        <div class="field">
+          <label>Longitud (°)</label>
+          <input type="text" inputmode="decimal" id="lon" placeholder="-64.18">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="fetchNASA()">
+          <span id="nasa-spinner" style="display:none" class="spinner"></span>
+          Obtener Hda(0) de NASA POWER (2024)
+        </button>
+      </div>
+      <div id="nasa-result" style="margin-top:10px; font-size:13px; color:var(--text2);"></div>
+
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="field">
+          <label>Hda(0) [kWh/m²/día]</label>
+          <input type="number" inputmode="decimal" id="hda0" placeholder="5.07" step="0.01">
+          <span class="hint">O ingresá manualmente</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📐 Datos del panel</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Acimut α (°)</label>
+          <input type="text" inputmode="decimal" id="alpha" placeholder="0">
+          <span class="hint">0°=sur/norte, +este, −oeste</span>
+        </div>
+        <div class="field">
+          <label>Inclinación β (°)</label>
+          <input type="text" inputmode="decimal" id="beta" placeholder="30">
+          <span class="hint">0°=horizontal, 90°=vertical</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="calcM1()">Calcular Módulo 1</button>
+      </div>
+    </div>
+
+    <div id="result-m1" style="display:none">
+      <div class="card">
+        <div class="card-title">📊 Resultados — Módulo 1</div>
+        <div id="steps-m1"></div>
+        <div id="badge-m1" style="margin-top:12px;"></div>
+        <div class="btn-row" style="margin-top:16px;">
+          <button class="btn btn-secondary" onclick="exportarPDFM1()">📄 Exportar PDF</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== MÓDULO 2 ===== -->
+  <div id="panel-m2" class="panel">
+
+    <div class="card">
+      <div class="card-title">🏗️ Configuración del panel y provincia</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Provincia</label>
+          <select id="provincia" onchange="updateTablaSelector()">
+            <option value="buenos_aires">Buenos Aires</option>
+            <option value="caba">Ciudad Autónoma de Buenos Aires</option>
+            <option value="catamarca">Catamarca</option>
+            <option value="chaco">Chaco</option>
+            <option value="chubut">Chubut</option>
+            <option value="cordoba" selected>Córdoba</option>
+            <option value="corrientes">Corrientes</option>
+            <option value="entre_rios">Entre Ríos</option>
+            <option value="formosa">Formosa</option>
+            <option value="jujuy">Jujuy</option>
+            <option value="la_pampa">La Pampa</option>
+            <option value="la_rioja">La Rioja</option>
+            <option value="mendoza">Mendoza</option>
+            <option value="misiones">Misiones</option>
+            <option value="neuquen">Neuquén</option>
+            <option value="rio_negro">Río Negro</option>
+            <option value="salta">Salta</option>
+            <option value="san_juan">San Juan</option>
+            <option value="san_luis">San Luis</option>
+            <option value="santa_cruz">Santa Cruz</option>
+            <option value="santa_fe">Santa Fe</option>
+            <option value="santiago_del_estero">Santiago del Estero</option>
+            <option value="tierra_del_fuego">Tierra del Fuego</option>
+            <option value="tucuman">Tucumán</option>
+          </select>
+          <span class="hint">Tablas disponibles: Córdoba. Más provincias próximamente</span>
+        </div>
+        <div class="field">
+          <label>Inclinación panel β (°)</label>
+          <select id="m2-beta">
+            <option value="15">15°</option>
+            <option value="30" selected>30°</option>
+            <option value="45">45°</option>
+            <option value="60">60°</option>
+            <option value="75">75°</option>
+            <option value="90">90°</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Acimut panel Y (°)</label>
+          <select id="m2-Y">
+            <option value="-60">-60° (hacia O/E extremo)</option>
+            <option value="-30">-30° (hacia O/E moderado)</option>
+            <option value="0" selected>0° (Norte — sur hemisferio sur)</option>
+            <option value="30">+30° (hacia E/O moderado)</option>
+            <option value="60">+60° (hacia E/O extremo)</option>
+          </select>
+          <span class="hint">0°=norte geográfico. Negativo=oeste, positivo=este</span>
+        </div>
+        <div class="field">
+          <label>Altura del panel h_panel (m)</label>
+          <input type="number" id="h-panel" value="4" step="0.5" min="0">
+          <span class="hint">Altura del panel sobre el suelo</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📏 Ingreso de obstáculos</div>
+      <div class="info-box">
+        Ingresá las medidas de cada vértice del perfil de obstáculos medidas desde el panel.
+        <strong>Distancia frontal</strong> = distancia horizontal hacia el norte.
+        <strong>Desplazamiento lateral</strong> = hacia el este (+) o al oeste (−).
+        <strong>Distancia al obstáculo</strong> = distancia horizontal desde el panel hasta la base del obstáculo.
+        <strong>Altura del obstáculo</strong> = altura total del obstáculo (la app resta la altura del panel).
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="obs-table" id="obs-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Dist. frontal (m)</th>
+              <th>Desp. lateral (m)</th>
+              <th>Dist. a obst. (m)</th>
+              <th>Alt. obst. (m)</th>
+              <th>Azimut a (°)</th>
+              <th>Elevación β (°)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="obs-body">
+          </tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary btn-sm" onclick="addObsRow()">+ Agregar punto</button>
+      </div>
+    </div>
+
+    <!-- Tabla de sectores sombreados: ingreso manual -->
+    <div class="card">
+      <div class="card-title">📋 Tabla de sectores sombreados</div>
+      <div class="warn-box">
+        Para cada sector cubierto identificado en el ábaco: seleccioná el sector, ingresá el <strong>% de pérdida</strong> de la tabla del Anexo V de la Guía del Recurso Solar, y el <strong>factor de relleno fr</strong> (fracción del sector cubierta: 0,25 / 0,5 / 0,75 / 1).
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="obs-table" id="sector-table">
+          <thead>
+            <tr>
+              <th>Sector</th>
+              <th>% pérdida (Anexo V)</th>
+              <th>fr (fracción cubierta)</th>
+              <th>Resultado (% × fr)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sector-body"></tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary btn-sm" onclick="addSectorRow()">+ Agregar sector</button>
+        <button class="btn btn-primary" onclick="calcM2()">Recalcular</button>
+      </div>
+
+      <!-- Resultados M2 manual -->
+      <div id="result-m2-boxes" style="display:none; margin-top:20px;">
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:200px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:16px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:8px;">PÉRDIDAS POR SOMBREADO</div>
+            <div style="font-size:28px;font-weight:800;font-family:monospace;" id="m2-pct-display">—</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">p = Σ (% sector × fr)</div>
+            <div style="margin-top:10px;font-size:12px;color:var(--text3);">FS = 1 − p/100 = <strong id="m2-fs-display" style="color:var(--text);">—</strong></div>
+            <div id="m2-badge" style="margin-top:10px;"></div>
+            <div style="margin-top:4px;font-size:11px;color:var(--text3);">Límite aceptable: ≤ 10%</div>
+          </div>
+          <div style="flex:1; min-width:200px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:16px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:8px;">PÉRDIDAS TOTALES (M1 + sombreado)</div>
+            <div style="font-size:28px;font-weight:800;font-family:monospace;" id="m2-total-display">—</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">M1 + p sombreado</div>
+            <div id="m2-total-badge" style="margin-top:10px;"></div>
+            <div style="margin-top:4px;font-size:11px;color:var(--text3);">Límite aceptable: ≤ 15%</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ===== RESULTADO COMBINADO ===== -->
+  <div id="panel-res" class="panel">
+    <div class="card">
+      <div class="card-title">🔢 Datos calculados</div>
+      <div class="result-box">
+        <div class="result-row">
+          <span class="label">Pérdidas M1 (orientación e inclinación)</span>
+          <span class="value" id="res-m1-val">—</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Pérdidas M2 (sombreado)</span>
+          <span class="value" id="res-m2-val">—</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Ha(α,β) irradiación real del panel</span>
+          <span class="value" id="res-habeta-val">—</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="calcCombinado()">Calcular resultado combinado</button>
+      </div>
+    </div>
+    <div id="result-combinado"></div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+//  DATOS DE TABLAS — CÓRDOBA (págs. 111-112 Guía Recurso Solar)
+//  Tabla indexada por [β][Y][sector]
+//  Sectores: A1..A14, B1..B12, C1..C10, D1..D8 (solo los de la tabla)
+//  Formato: { "A1": %, "A2": %, ... }
+//  Referencia de tablas:
+//   Tabla 1: β=15, Y=0    Tabla 2: β=15, Y=30   Tabla 3: β=15, Y=60
+//   Tabla 4: β=15, Y=90   Tabla 5: β=30, Y=0 (ojo: en la guía β=15, tabla5=β30 Y=0)
+//  La guía usa: Tabla 1=β15 Y=0, T2=β15 Y=30, T3=β15 Y=60, T4=β15 Y=90
+//               T5=β30 Y=0 ... etc pero CABECERA dice β=15° Y=30° etc.
+//  Voy a usar la notación REAL del PDF: filas=sector#, cols=A,B,C,D
+// ============================================================
+
+// Tabla indexada: CORDOBA_TABLAS[beta][Y] = { sectorNombre: porcentaje }
+// Extraído de las imágenes págs. 111-112
+// Columnas A, B, C, D corresponden a las 4 columnas de cada sub-tabla
+
+const CORDOBA_TABLAS = {
+  // Cada entrada: [beta][Y] = { "1A":%, "1B":%, ... "14D":% }
+  // Filas: sectores 1-14 (impares=oeste, pares=este)
+  // Columnas: A(baja),B,C,D(alta)
+  // Tablas 1-30 leídas del PDF págs. 111-112
+  15: {
+    "-60": { // Tabla 1: β=15°, Y=-60°
+      "13A":0.00,"13B":0.00,"13C":0.07,"13D":0.54,
+      "11A":0.03,"11B":0.27,"11C":0.55,"11D":1.57,
+       "9A":1.13, "9B":0.84, "9C":1.11, "9D":2.70,
+       "7A":2.09, "7B":1.38, "7C":1.69, "7D":3.86,
+       "5A":2.96, "5B":1.85, "5C":2.17, "5D":4.80,
+       "3A":3.57, "3B":2.17, "3C":2.50, "3D":5.40,
+       "1A":3.78, "1B":2.28, "1C":2.60, "1D":5.58,
+       "2A":3.55, "2B":2.15, "2C":2.46, "2D":5.30,
+       "4A":2.93, "4B":1.82, "4C":2.11, "4D":4.62,
+       "6A":2.05, "6B":1.35, "6C":1.62, "6D":3.66,
+       "8A":1.09, "8B":0.82, "8C":1.06, "8D":2.55,
+      "10A":0.23,"10B":0.32,"10C":0.52,"10D":1.49,
+      "12A":0.00,"12B":0.04,"12C":0.14,"12D":0.55,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.11,
+    },
+    "-30": { // Tabla 2: β=15°, Y=-30°
+      "13A":0.00,"13B":0.00,"13C":0.04,"13D":0.33,
+      "11A":0.02,"11B":0.21,"11C":0.43,"11D":1.27,
+       "9A":1.00, "9B":0.73, "9C":0.97, "9D":2.35,
+       "7A":1.97, "7B":1.27, "7C":1.54, "7D":3.48,
+       "5A":2.89, "5B":1.77, "5C":2.05, "5D":4.46,
+       "3A":3.58, "3B":2.13, "3C":2.41, "3D":5.14,
+       "1A":3.90, "1B":2.29, "1C":2.57, "1D":5.43,
+       "2A":3.77, "2B":2.23, "2C":2.50, "2D":5.27,
+       "4A":3.24, "4B":1.94, "4C":2.20, "4D":4.69,
+       "6A":2.39, "6B":1.50, "6C":1.73, "6D":3.80,
+       "8A":1.42, "8B":0.97, "8C":1.18, "8D":2.73,
+      "10A":0.49,"10B":0.45,"10C":0.63,"10D":1.65,
+      "12A":0.00,"12B":0.05,"12C":0.16,"12D":0.66,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.10,
+    },
+    "0": { // Tabla 3: β=15°, Y=0°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.15,
+      "11A":0.01,"11B":0.12,"11C":0.29,"11D":0.96,
+       "9A":0.76, "9B":0.59, "9C":0.80, "9D":2.00,
+       "7A":1.72, "7B":1.12, "7C":1.36, "7D":3.10,
+       "5A":2.68, "5B":1.64, "5C":1.90, "5D":4.12,
+       "3A":3.46, "3B":2.05, "3C":2.31, "3D":4.91,
+       "1A":3.89, "1B":2.28, "1C":2.54, "1D":5.33,
+       "2A":3.90, "2B":2.28, "2C":2.54, "2D":5.32,
+       "4A":3.48, "4B":2.06, "4C":2.31, "4D":4.87,
+       "6A":2.70, "6B":1.65, "6C":1.89, "6D":4.07,
+       "8A":1.75, "8B":1.14, "8C":1.35, "8D":3.04,
+      "10A":0.79,"10B":0.60,"10C":0.79,"10D":1.93,
+      "12A":0.03,"12B":0.13,"12C":0.28,"12D":0.90,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.11,
+    },
+    "30": { // Tabla 4: β=15°, Y=30°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.13,
+      "11A":0.00,"11B":0.04,"11C":0.17,"11D":0.71,
+       "9A":0.47, "9B":0.44, "9C":0.64, "9D":1.71,
+       "7A":1.39, "7B":0.95, "7C":1.20, "7D":2.79,
+       "5A":2.37, "5B":1.48, "5C":1.74, "5D":3.85,
+       "3A":3.21, "3B":1.93, "3C":2.20, "3D":4.73,
+       "1A":3.76, "1B":2.22, "1C":2.50, "1D":5.29,
+       "2A":3.90, "2B":2.30, "2C":2.57, "2D":5.42,
+       "4A":3.60, "4B":2.14, "4C":2.41, "4D":5.11,
+       "6A":2.91, "6B":1.78, "6C":2.04, "6D":4.41,
+       "8A":1.99, "8B":1.29, "8C":1.53, "8D":3.42,
+      "10A":1.02,"10B":0.75,"10C":0.95,"10D":2.29,
+      "12A":0.06,"12B":0.23,"12C":0.42,"12D":1.21,
+      "14A":0.00,"14B":0.00,"14C":0.02,"14D":0.28,
+    },
+    "60": { // Tabla 5: β=15°, Y=60°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.13,
+      "11A":0.00,"11B":0.05,"11C":0.14,"11D":0.60,
+       "9A":0.22, "9B":0.30, "9C":0.53, "9D":1.55,
+       "7A":1.06, "7B":0.80, "7C":1.07, "7D":2.62,
+       "5A":2.02, "5B":1.34, "5C":1.63, "5D":3.72,
+       "3A":2.91, "3B":1.81, "3C":2.12, "3D":4.66,
+       "1A":3.53, "1B":2.15, "1C":2.46, "1D":5.32,
+       "2A":3.78, "2B":2.28, "2C":2.60, "2D":5.58,
+       "4A":3.58, "4B":2.18, "4C":2.49, "4D":5.37,
+       "6A":2.98, "6B":1.86, "6C":2.16, "6D":4.75,
+       "8A":2.11, "8B":1.39, "8C":1.67, "8D":3.80,
+      "10A":1.15,"10B":0.85,"10C":1.09,"10D":2.63,
+      "12A":0.09,"12B":0.31,"12C":0.54,"12D":1.51,
+      "14A":0.00,"14B":0.00,"14C":0.04,"14D":0.49,
+    },
+  },
+  30: {
+    "-60": { // Tabla 6: β=30°, Y=-60°
+      "13A":0.00,"13B":0.00,"13C":0.12,"13D":0.76,
+      "11A":0.05,"11B":0.42,"11C":0.76,"11D":1.90,
+       "9A":1.67, "9B":1.09, "9C":1.35, "9D":3.05,
+       "7A":2.68, "7B":1.65, "7C":1.93, "7D":4.23,
+       "5A":3.53, "5B":2.10, "5C":2.37, "5D":5.05,
+       "3A":4.03, "3B":2.34, "3C":2.61, "3D":5.47,
+       "1A":4.04, "1B":2.35, "1C":2.60, "1D":5.41,
+       "2A":3.59, "2B":2.10, "2C":2.33, "2D":4.88,
+       "4A":2.78, "4B":1.67, "4C":1.88, "4D":4.00,
+       "6A":1.76, "6B":1.12, "6C":1.32, "6D":2.91,
+       "8A":0.73, "8B":0.57, "8C":0.73, "8D":1.77,
+      "10A":0.20,"10B":0.20,"10C":0.29,"10D":0.84,
+      "12A":0.00,"12B":0.05,"12C":0.13,"12D":0.47,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.11,
+    },
+    "-30": { // Tabla 7: β=30°, Y=-30°
+      "13A":0.00,"13B":0.00,"13C":0.06,"13D":0.37,
+      "11A":0.04,"11B":0.29,"11C":0.52,"11D":1.33,
+       "9A":1.41, "9B":0.89, "9C":1.08, "9D":2.40,
+       "7A":2.44, "7B":1.45, "7C":1.65, "7D":3.53,
+       "5A":3.39, "5B":1.94, "5C":2.14, "5D":4.44,
+       "3A":4.05, "3B":2.28, "3C":2.47, "3D":5.03,
+       "1A":4.28, "1B":2.39, "1C":2.57, "1D":5.19,
+       "2A":4.04, "2B":2.26, "2C":2.43, "2D":4.89,
+       "4A":3.38, "4B":1.91, "4C":2.07, "4D":4.21,
+       "6A":2.43, "6B":1.42, "6C":1.56, "6D":3.25,
+       "8A":1.39, "8B":0.87, "8C":1.00, "8D":2.16,
+      "10A":0.43,"10B":0.35,"10C":0.46,"10D":1.14,
+      "12A":0.00,"12B":0.04,"12C":0.12,"12D":0.44,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.10,
+    },
+    "0": { // Tabla 8: β=30°, Y=0°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.12,
+      "11A":0.01,"11B":0.13,"11C":0.26,"11D":0.76,
+       "9A":0.96, "9B":0.62, "9C":0.77, "9D":1.75,
+       "7A":1.97, "7B":1.17, "7C":1.33, "7D":2.83,
+       "5A":2.99, "5B":1.70, "5C":1.86, "5D":3.83,
+       "3A":3.82, "3B":2.12, "3C":2.28, "3D":4.60,
+       "1A":4.28, "1B":2.36, "1C":2.52, "1D":5.02,
+       "2A":4.28, "2B":2.36, "2C":2.51, "2D":5.01,
+       "4A":3.84, "4B":2.13, "4C":2.28, "4D":4.57,
+       "6A":3.01, "6B":1.71, "6C":1.86, "6D":3.77,
+       "8A":2.00, "8B":1.18, "8C":1.32, "8D":2.76,
+      "10A":0.98,"10B":0.64,"10C":0.76,"10D":1.69,
+      "12A":0.04,"12B":0.15,"12C":0.25,"12D":0.70,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.10,
+    },
+    "30": { // Tabla 9: β=30°, Y=30°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.13,
+      "11A":0.00,"11B":0.04,"11C":0.12,"11D":0.46,
+       "9A":0.41, "9B":0.33, "9C":0.47, "9D":1.20,
+       "7A":1.36, "7B":0.85, "7C":1.01, "7D":2.22,
+       "5A":2.40, "5B":1.40, "5C":1.57, "5D":3.30,
+       "3A":3.36, "3B":1.90, "3C":2.08, "3D":4.25,
+       "1A":4.03, "1B":2.25, "1C":2.43, "1D":4.92,
+       "2A":4.28, "2B":2.39, "2C":2.57, "2D":5.19,
+       "4A":4.06, "4B":2.28, "4C":2.47, "4D":5.00,
+       "6A":3.41, "6B":1.95, "6C":2.14, "6D":4.39,
+       "8A":2.47, "8B":1.47, "8C":1.64, "8D":3.47,
+      "10A":1.43,"10B":0.91,"10C":1.06,"10D":2.34,
+      "12A":0.11,"12B":0.34,"12C":0.51,"12D":1.27,
+      "14A":0.00,"14B":0.00,"14C":0.03,"14D":0.32,
+    },
+    "60": { // Tabla 10: β=30°, Y=60°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.13,
+      "11A":0.00,"11B":0.05,"11C":0.13,"11D":0.49,
+       "9A":0.19, "9B":0.19, "9C":0.30, "9D":0.89,
+       "7A":0.70, "7B":0.55, "7C":0.74, "7D":1.83,
+       "5A":1.72, "5B":1.11, "5C":1.33, "5D":2.97,
+       "3A":2.75, "3B":1.65, "3C":1.89, "3D":4.05,
+       "1A":3.57, "1B":2.09, "1C":2.34, "1D":4.92,
+       "2A":4.03, "2B":2.34, "2C":2.60, "2D":5.42,
+       "4A":4.03, "4B":2.34, "4C":2.61, "4D":5.45,
+       "6A":3.55, "6B":2.10, "6C":2.36, "6D":5.01,
+       "8A":2.71, "8B":1.66, "8C":1.92, "8D":4.16,
+      "10A":1.69,"10B":1.11,"10C":1.33,"10D":2.99,
+      "12A":0.16,"12B":0.49,"12C":0.74,"12D":1.84,
+      "14A":0.00,"14B":0.00,"14C":0.06,"14D":0.72,
+    },
+  },
+  45: {
+    "-60": { // Tabla 11: β=45°, Y=-60°
+      "13A":0.00,"13B":0.00,"13C":0.16,"13D":0.98,
+      "11A":0.08,"11B":0.57,"11C":0.96,"11D":2.22,
+       "9A":2.20, "9B":1.34, "9C":1.58, "9D":3.38,
+       "7A":3.25, "7B":1.91, "7C":2.15, "7D":4.54,
+       "5A":4.06, "5B":2.32, "5C":2.54, "5D":5.24,
+       "3A":4.43, "3B":2.49, "3C":2.69, "3D":5.46,
+       "1A":4.25, "1B":2.38, "1C":2.56, "1D":5.15,
+       "2A":3.59, "2B":2.02, "2C":2.17, "2D":4.38,
+       "4A":2.58, "4B":1.49, "4C":1.62, "4D":3.31,
+       "6A":1.43, "6B":0.88, "6C":0.99, "6D":2.11,
+       "8A":0.44, "8B":0.33, "8C":0.44, "8D":1.02,
+      "10A":0.21,"10B":0.20,"10C":0.30,"10D":0.79,
+      "12A":0.00,"12B":0.05,"12C":0.14,"12D":0.48,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.11,
+    },
+    "-30": { // Tabla 12: β=45°, Y=-30°
+      "13A":0.00,"13B":0.00,"13C":0.08,"13D":0.41,
+      "11A":0.05,"11B":0.38,"11C":0.61,"11D":1.39,
+       "9A":1.80, "9B":1.04, "9C":1.19, "9D":2.45,
+       "7A":2.89, "7B":1.62, "7C":1.76, "7D":3.56,
+       "5A":3.86, "5B":2.11, "5C":2.23, "5D":4.40,
+       "3A":4.49, "3B":2.41, "3C":2.51, "3D":4.88,
+       "1A":4.64, "1B":2.47, "1C":2.56, "1D":4.91,
+       "2A":4.28, "2B":2.28, "2C":2.35, "2D":4.49,
+       "4A":3.51, "4B":1.88, "4C":1.93, "4D":3.71,
+       "6A":2.46, "6B":1.34, "6C":1.39, "6D":2.69,
+       "8A":1.36, "8B":0.77, "8C":0.81, "8D":1.60,
+      "10A":0.38,"10B":0.25,"10C":0.32,"10D":0.77,
+      "12A":0.00,"12B":0.05,"12C":0.13,"12D":0.45,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.11,
+    },
+    "0": { // Tabla 13: β=45°, Y=0°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.13,
+      "11A":0.02,"11B":0.14,"11C":0.24,"11D":0.58,
+       "9A":1.15, "9B":0.66, "9C":0.74, "9D":1.52,
+       "7A":2.22, "7B":1.22, "7C":1.30, "7D":2.56,
+       "5A":3.28, "5B":1.76, "5C":1.83, "5D":3.54,
+       "3A":4.16, "3B":2.19, "3C":2.25, "3D":4.30,
+       "1A":4.64, "1B":2.43, "1C":2.49, "1D":4.71,
+       "2A":4.65, "2B":2.44, "2C":2.48, "2D":4.69,
+       "4A":4.18, "4B":2.20, "4C":2.25, "4D":4.26,
+       "6A":3.31, "6B":1.77, "6C":1.82, "6D":3.49,
+       "8A":2.25, "8B":1.23, "8C":1.29, "8D":2.50,
+      "10A":1.18,"10B":0.67,"10C":0.73,"10D":1.47,
+      "12A":0.06,"12B":0.17,"12C":0.23,"12D":0.53,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.10,
+    },
+    "30": { // Tabla 14: β=45°, Y=30°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.13,
+      "11A":0.00,"11B":0.05,"11C":0.13,"11D":0.47,
+       "9A":0.36, "9B":0.24, "9C":0.32, "9D":0.80,
+       "7A":1.32, "7B":0.75, "7C":0.82, "7D":1.66,
+       "5A":2.43, "5B":1.32, "5C":1.40, "5D":2.75,
+       "3A":3.48, "3B":1.86, "3C":1.94, "3D":3.76,
+       "1A":4.26, "1B":2.27, "1C":2.35, "1D":4.53,
+       "2A":4.63, "2B":2.47, "2C":2.55, "2D":4.92,
+       "4A":4.50, "4B":2.41, "4C":2.51, "4D":4.86,
+       "6A":3.88, "6B":2.11, "6C":2.22, "6D":4.35,
+       "8A":2.92, "8B":1.63, "8C":1.75, "8D":3.50,
+      "10A":1.82,"10B":1.06,"10C":1.16,"10D":2.39,
+      "12A":0.16,"12B":0.45,"12C":0.60,"12D":1.33,
+      "14A":0.00,"14B":0.00,"14C":0.04,"14D":0.37,
+    },
+    "60": { // Tabla 15: β=45°, Y=60°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.14,
+      "11A":0.00,"11B":0.05,"11C":0.14,"11D":0.50,
+       "9A":0.20, "9B":0.20, "9C":0.29, "9D":0.81,
+       "7A":0.43, "7B":0.32, "7C":0.45, "7D":1.07,
+       "5A":1.40, "5B":0.86, "5C":1.00, "5D":2.18,
+       "3A":2.55, "3B":1.47, "3C":1.63, "3D":3.37,
+       "1A":3.56, "1B":2.00, "1C":2.18, "1D":4.43,
+       "2A":4.23, "2B":2.37, "2C":2.56, "2D":5.18,
+       "4A":4.42, "4B":2.48, "4C":2.68, "4D":5.45,
+       "6A":4.07, "6B":2.32, "6C":2.53, "6D":5.20,
+       "8A":3.27, "8B":1.92, "8C":2.14, "8D":4.48,
+      "10A":2.22,"10B":1.36,"10C":1.55,"10D":3.32,
+      "12A":0.23,"12B":0.67,"12C":0.93,"12D":2.15,
+      "14A":0.00,"14B":0.00,"14C":0.08,"14D":0.95,
+    },
+  },
+  60: {
+    "-60": { // Tabla 16: β=60°, Y=-60°
+      "13A":0.00,"13B":0.00,"13C":0.21,"13D":1.20,
+      "11A":0.10,"11B":0.73,"11C":1.15,"11D":2.53,
+       "9A":2.73, "9B":1.58, "9C":1.80, "9D":3.69,
+       "7A":3.80, "7B":2.15, "7C":2.35, "7D":4.79,
+       "5A":4.55, "5B":2.51, "5C":2.68, "5D":5.33,
+       "3A":4.77, "3B":2.59, "3C":2.72, "3D":5.33,
+       "1A":4.39, "1B":2.36, "1C":2.46, "1D":4.76,
+       "2A":3.51, "2B":1.89, "2C":1.95, "2D":3.74,
+       "4A":2.32, "4B":1.26, "4C":1.30, "4D":2.49,
+       "6A":1.06, "6B":0.60, "6C":0.64, "6D":1.28,
+       "8A":0.48, "8B":0.35, "8C":0.43, "8D":1.01,
+      "10A":0.23,"10B":0.22,"10C":0.32,"10D":0.84,
+      "12A":0.01,"12B":0.05,"12C":0.14,"12D":0.50,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.12,
+    },
+    "-30": { // Tabla 17: β=60°, Y=-30°
+      "13A":0.00,"13B":0.00,"13C":0.09,"13D":0.45,
+      "11A":0.07,"11B":0.47,"11C":0.71,"11D":1.46,
+       "9A":2.21, "9B":1.20, "9C":1.29, "9D":2.50,
+       "7A":3.36, "7B":1.79, "7C":1.86, "7D":3.57,
+       "5A":4.33, "5B":2.27, "5C":2.30, "5D":4.32,
+       "3A":4.92, "3B":2.53, "3C":2.54, "3D":4.68,
+       "1A":4.98, "1B":2.54, "1C":2.51, "1D":4.58,
+       "2A":4.51, "2B":2.28, "2C":2.24, "2D":4.02,
+       "4A":3.62, "4B":1.82, "4C":1.77, "4D":3.15,
+       "6A":2.47, "6B":1.25, "6C":1.20, "6D":2.09,
+       "8A":1.31, "8B":0.66, "8C":0.61, "8D":1.07,
+      "10A":0.32,"10B":0.21,"10C":0.29,"10D":0.78,
+      "12A":0.00,"12B":0.05,"12C":0.13,"12D":0.47,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.11,
+    },
+    "0": { // Tabla 18: β=60°, Y=0°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.13,
+      "11A":0.02,"11B":0.15,"11C":0.22,"11D":0.50,
+       "9A":1.36, "9B":0.69, "9C":0.71, "9D":1.29,
+       "7A":2.47, "7B":1.27, "7C":1.26, "7D":2.28,
+       "5A":3.59, "5B":1.82, "5C":1.79, "5D":3.22,
+       "3A":4.51, "3B":2.26, "3C":2.21, "3D":3.95,
+       "1A":5.01, "1B":2.51, "1C":2.44, "1D":4.34,
+       "2A":5.02, "2B":2.51, "2C":2.44, "2D":4.33,
+       "4A":4.53, "4B":2.27, "4C":2.21, "4D":3.92,
+       "6A":3.62, "6B":1.83, "6C":1.79, "6D":3.17,
+       "8A":2.51, "8B":1.28, "8C":1.25, "8D":2.22,
+      "10A":1.38,"10B":0.71,"10C":0.70,"10D":1.23,
+      "12A":0.08,"12B":0.19,"12C":0.21,"12D":0.48,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.11,
+    },
+    "30": { // Tabla 19: β=60°, Y=30°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.14,
+      "11A":0.00,"11B":0.05,"11C":0.13,"11D":0.49,
+       "9A":0.31, "9B":0.20, "9C":0.29, "9D":0.80,
+       "7A":1.28, "7B":0.64, "7C":0.62, "7D":1.09,
+       "5A":2.44, "5B":1.23, "5C":1.21, "5D":2.15,
+       "3A":3.59, "3B":1.81, "3C":1.78, "3D":3.20,
+       "1A":4.48, "1B":2.27, "1C":2.25, "1D":4.06,
+       "2A":4.97, "2B":2.53, "2C":2.51, "2D":4.59,
+       "4A":4.93, "4B":2.53, "4C":2.53, "4D":4.67,
+       "6A":4.35, "6B":2.27, "6C":2.30, "6D":4.28,
+       "8A":3.38, "8B":1.81, "8C":1.85, "8D":3.52,
+      "10A":2.23,"10B":1.22,"10C":1.27,"10D":2.45,
+      "12A":0.21,"12B":0.56,"12C":0.69,"12D":1.40,
+      "14A":0.00,"14B":0.00,"14C":0.04,"14D":0.41,
+    },
+    "60": { // Tabla 20: β=60°, Y=60°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.15,
+      "11A":0.00,"11B":0.05,"11C":0.14,"11D":0.53,
+       "9A":0.22, "9B":0.21, "9C":0.31, "9D":0.86,
+       "7A":0.47, "7B":0.35, "7C":0.44, "7D":1.02,
+       "5A":1.03, "5B":0.58, "5C":0.64, "5D":1.32,
+       "3A":2.28, "3B":1.24, "3C":1.31, "3D":2.56,
+       "1A":3.47, "1B":1.87, "1C":1.95, "1D":3.80,
+       "2A":4.36, "2B":2.35, "2C":2.46, "2D":4.79,
+       "4A":4.76, "4B":2.58, "4C":2.71, "4D":5.33,
+       "6A":4.55, "6B":2.51, "6C":2.67, "6D":5.30,
+       "8A":3.82, "8B":2.16, "8C":2.34, "8D":4.74,
+      "10A":2.74,"10B":1.60,"10C":1.76,"10D":3.63,
+      "12A":0.30,"12B":0.85,"12C":1.13,"12D":2.46,
+      "14A":0.00,"14B":0.00,"14C":0.10,"14D":1.18,
+    },
+  },
+  75: {
+    "-60": { // Tabla 21: β=75°, Y=-60°
+      "13A":0.00,"13B":0.00,"13C":0.26,"13D":1.44,
+      "11A":0.12,"11B":0.89,"11C":1.36,"11D":2.85,
+       "9A":3.29, "9B":1.84, "9C":2.01, "9D":3.97,
+       "7A":4.37, "7B":2.39, "7C":2.53, "7D":4.99,
+       "5A":5.02, "5B":2.68, "5C":2.77, "5D":5.32,
+       "3A":5.06, "3B":2.64, "3C":2.68, "3D":5.04,
+       "1A":4.44, "1B":2.29, "1C":2.28, "1D":4.16,
+       "2A":3.33, "2B":1.69, "2C":1.63, "2D":2.88,
+       "4A":1.96, "4B":0.97, "4C":0.89, "4D":1.57,
+       "6A":0.76, "6B":0.51, "6C":0.59, "6D":1.32,
+       "8A":0.54, "8B":0.39, "8C":0.49, "8D":1.15,
+      "10A":0.25,"10B":0.24,"10C":0.35,"10D":0.91,
+      "12A":0.01,"12B":0.06,"12C":0.16,"12D":0.54,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.13,
+    },
+    "-30": { // Tabla 22: β=75°, Y=-30°
+      "13A":0.00,"13B":0.00,"13C":0.12,"13D":0.50,
+      "11A":0.08,"11B":0.57,"11C":0.81,"11D":1.53,
+       "9A":2.67, "9B":1.38, "9C":1.41, "9D":2.55,
+       "7A":3.87, "7B":1.96, "7C":1.97, "7D":3.55,
+       "5A":4.85, "5B":2.43, "5C":2.37, "5D":4.19,
+       "3A":5.38, "3B":2.64, "3C":2.53, "3D":4.39,
+       "1A":5.32, "1B":2.58, "1C":2.43, "1D":4.11,
+       "2A":4.72, "2B":2.26, "2C":2.08, "2D":3.41,
+       "4A":3.71, "4B":1.74, "4C":1.56, "4D":2.44,
+       "6A":2.47, "6B":1.13, "6C":0.96, "6D":1.43,
+       "8A":1.26, "8B":0.52, "8C":0.49, "8D":1.08,
+      "10A":0.30,"10B":0.23,"10C":0.33,"10D":0.86,
+      "12A":0.01,"12B":0.05,"12C":0.15,"12D":0.51,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.12,
+    },
+    "0": { // Tabla 23: β=75°, Y=0°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.15,
+      "11A":0.03,"11B":0.17,"11C":0.20,"11D":0.53,
+       "9A":1.60, "9B":0.74, "9C":0.67, "9D":1.03,
+       "7A":2.78, "7B":1.32, "7C":1.22, "7D":1.94,
+       "5A":3.95, "5B":1.88, "5C":1.74, "5D":2.83,
+       "3A":4.91, "3B":2.33, "3C":2.15, "3D":3.52,
+       "1A":5.43, "1B":2.58, "1C":2.38, "1D":3.88,
+       "2A":5.44, "2B":2.58, "2C":2.38, "2D":3.87,
+       "4A":4.93, "4B":2.34, "4C":2.15, "4D":3.49,
+       "6A":3.98, "6B":1.90, "6C":1.74, "6D":2.78,
+       "8A":2.81, "8B":1.34, "8C":1.21, "8D":1.89,
+      "10A":1.62,"10B":0.76,"10C":0.66,"10D":1.00,
+      "12A":0.10,"12B":0.21,"12C":0.21,"12D":0.50,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.12,
+    },
+    "30": { // Tabla 24: β=75°, Y=30°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.15,
+      "11A":0.00,"11B":0.05,"11C":0.15,"11D":0.53,
+       "9A":0.28, "9B":0.22, "9C":0.33, "9D":0.88,
+       "7A":1.22, "7B":0.52, "7C":0.48, "7D":1.09,
+       "5A":2.43, "5B":1.11, "5C":0.97, "5D":1.44,
+       "3A":3.67, "3B":1.72, "3C":1.57, "3D":2.49,
+       "1A":4.69, "1B":2.24, "1C":2.09, "1D":3.45,
+       "2A":5.30, "2B":2.57, "2C":2.43, "2D":4.13,
+       "4A":5.38, "4B":2.64, "4C":2.53, "4D":4.38,
+       "6A":4.86, "6B":2.43, "6C":2.36, "6D":4.15,
+       "8A":3.90, "8B":1.99, "8C":1.96, "8D":3.50,
+      "10A":2.68,"10B":1.39,"10C":1.38,"10D":2.50,
+      "12A":0.26,"12B":0.68,"12C":0.79,"12D":1.47,
+      "14A":0.00,"14B":0.00,"14C":0.05,"14D":0.46,
+    },
+    "60": { // Tabla 25: β=75°, Y=60°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.16,
+      "11A":0.00,"11B":0.06,"11C":0.16,"11D":0.56,
+       "9A":0.24, "9B":0.24, "9C":0.35, "9D":0.94,
+       "7A":0.53, "7B":0.39, "7C":0.49, "7D":1.16,
+       "5A":0.75, "5B":0.50, "5C":0.59, "5D":1.32,
+       "3A":1.92, "3B":0.94, "3C":0.91, "3D":1.59,
+       "1A":3.28, "1B":1.66, "1C":1.64, "1D":2.95,
+       "2A":4.41, "2B":2.27, "2C":2.28, "2D":4.22,
+       "4A":5.04, "4B":2.63, "4C":2.68, "4D":5.05,
+       "6A":5.01, "6B":2.67, "6C":2.76, "6D":5.30,
+       "8A":4.38, "8B":2.39, "8C":2.52, "8D":4.94,
+      "10A":3.29,"10B":1.85,"10C":1.97,"10D":3.92,
+      "12A":0.38,"12B":1.05,"12C":1.33,"12D":2.78,
+      "14A":0.00,"14B":0.00,"14C":0.12,"14D":1.43,
+    },
+  },
+  90: {
+    "-60": { // Tabla 26: β=90°, Y=-60°
+      "13A":0.00,"13B":0.00,"13C":0.32,"13D":1.68,
+      "11A":0.15,"11B":1.06,"11C":1.58,"11D":3.15,
+       "9A":3.88, "9B":2.09, "9C":2.22, "9D":4.20,
+       "7A":4.92, "7B":2.60, "7C":2.67, "7D":5.05,
+       "5A":5.43, "5B":2.80, "5C":2.79, "5D":5.10,
+       "3A":5.24, "3B":2.62, "3C":2.54, "3D":4.47,
+       "1A":4.35, "1B":2.11, "1C":1.96, "1D":3.23,
+       "2A":2.98, "2B":1.37, "2C":1.17, "2D":1.88,
+       "4A":1.44, "4B":0.71, "4C":0.79, "4D":1.70,
+       "6A":0.90, "6B":0.60, "6C":0.71, "6D":1.58,
+       "8A":0.62, "8B":0.46, "8C":0.57, "8D":1.34,
+      "10A":0.29,"10B":0.27,"10C":0.39,"10D":1.03,
+      "12A":0.01,"12B":0.07,"12C":0.17,"12D":0.60,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.15,
+    },
+    "-30": { // Tabla 27: β=90°, Y=-30°
+      "13A":0.00,"13B":0.00,"13C":0.14,"13D":0.55,
+      "11A":0.10,"11B":0.69,"11C":0.94,"11D":1.60,
+       "9A":3.22, "9B":1.58, "9C":1.54, "9D":2.57,
+       "7A":4.47, "7B":2.18, "7C":2.07, "7D":3.46,
+       "5A":5.42, "5B":2.59, "5C":2.40, "5D":3.91,
+       "3A":5.86, "3B":2.73, "3C":2.47, "3D":3.89,
+       "1A":5.65, "1B":2.58, "1C":2.26, "1D":3.37,
+       "2A":4.89, "2B":2.17, "2C":1.82, "2D":2.49,
+       "4A":3.74, "4B":1.59, "4C":1.24, "4D":1.78,
+       "6A":2.41, "6B":0.94, "6C":0.77, "6D":1.53,
+       "8A":1.16, "8B":0.47, "8C":0.55, "8D":1.30,
+      "10A":0.30,"10B":0.26,"10C":0.38,"10D":0.99,
+      "12A":0.01,"12B":0.06,"12C":0.17,"12D":0.58,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.14,
+    },
+    "0": { // Tabla 28: β=90°, Y=0°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.17,
+      "11A":0.04,"11B":0.19,"11C":0.20,"11D":0.61,
+       "9A":1.91, "9B":0.80, "9C":0.63, "9D":1.06,
+       "7A":3.17, "7B":1.39, "7C":1.15, "7D":1.55,
+       "5A":4.40, "5B":1.96, "5C":1.66, "5D":2.27,
+       "3A":5.40, "3B":2.40, "3C":2.05, "3D":2.88,
+       "1A":5.94, "1B":2.65, "1C":2.26, "1D":3.19,
+       "2A":5.95, "2B":2.65, "2C":2.26, "2D":3.18,
+       "4A":5.42, "4B":2.41, "4C":2.04, "4D":2.85,
+       "6A":4.43, "6B":1.97, "6C":1.65, "6D":2.23,
+       "8A":3.20, "8B":1.41, "8C":1.15, "8D":1.50,
+      "10A":1.93,"10B":0.81,"10C":0.62,"10D":1.03,
+      "12A":0.12,"12B":0.25,"12C":0.22,"12D":0.58,
+      "14A":0.00,"14B":0.00,"14C":0.01,"14D":0.14,
+    },
+    "30": { // Tabla 29: β=90°, Y=30°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.17,
+      "11A":0.00,"11B":0.06,"11C":0.17,"11D":0.60,
+       "9A":0.29, "9B":0.26, "9C":0.38, "9D":1.02,
+       "7A":1.12, "7B":0.45, "7C":0.56, "7D":1.31,
+       "5A":2.37, "5B":0.92, "5C":0.73, "5D":1.53,
+       "3A":3.70, "3B":1.57, "3C":1.25, "3D":1.75,
+       "1A":4.85, "1B":2.15, "1C":1.83, "1D":2.55,
+       "2A":5.63, "2B":2.57, "2C":2.27, "2D":3.41,
+       "4A":5.85, "4B":2.73, "4C":2.47, "4D":3.90,
+       "6A":5.43, "6B":2.60, "6C":2.39, "6D":3.89,
+       "8A":4.50, "8B":2.19, "8C":2.06, "8D":3.42,
+      "10A":3.23,"10B":1.60,"10C":1.51,"10D":2.52,
+      "12A":0.33,"12B":0.83,"12C":0.92,"12D":1.54,
+      "14A":0.00,"14B":0.00,"14C":0.06,"14D":0.53,
+    },
+    "60": { // Tabla 30: β=90°, Y=60°
+      "13A":0.00,"13B":0.00,"13C":0.01,"13D":0.18,
+      "11A":0.00,"11B":0.06,"11C":0.17,"11D":0.62,
+       "9A":0.28, "9B":0.27, "9C":0.39, "9D":1.05,
+       "7A":0.61, "7B":0.45, "7C":0.57, "7D":1.35,
+       "5A":0.89, "5B":0.59, "5C":0.71, "5D":1.58,
+       "3A":1.40, "3B":0.69, "3C":0.79, "3D":1.70,
+       "1A":2.93, "1B":1.34, "1C":1.19, "1D":1.88,
+       "2A":4.30, "2B":2.08, "2C":1.96, "2D":3.31,
+       "4A":5.21, "4B":2.60, "4C":2.54, "4D":4.51,
+       "6A":5.42, "6B":2.79, "6C":2.78, "6D":5.10,
+       "8A":4.93, "8B":2.60, "8C":2.66, "8D":5.01,
+      "10A":3.88,"10B":2.10,"10C":2.18,"10D":4.15,
+      "12A":0.46,"12B":1.26,"12C":1.54,"12D":3.09,
+      "14A":0.00,"14B":0.00,"14C":0.14,"14D":1.69,
+    },
+  },
+};
+
+// Función helper para obtener % de pérdida
+// sector: número (1-14), letra: "A","B","C","D"
+function getSectorPct(beta, Y, sectorNum, letra) {
+  const tabla = CORDOBA_TABLAS[beta]?.[String(Y)];
+  if(!tabla) return 0;
+  return tabla[`${sectorNum}${letra}`] ?? 0;
+}
+
+// ============================================================
+// TODOS LOS SECTORES EN ORDEN
+// ============================================================
+const ALL_SECTORS = [
+  "D1","D2","D3","D4","D5","D6","D7","D8",
+  "C1","C2","C3","C4","C5","C6","C7","C8","C9","C10",
+  "B1","B2","B3","B4","B5","B6","B7","B8","B9","B10","B11","B12",
+  "A1","A2","A3","A4","A5","A6","A7","A8","A9","A10","A11","A12","A13","A14"
+];
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+let state = {
+  m1: { perdidas: null, habeta: null, habopt: null,
+        lat: null, lon: null, hda0: null, alpha: null, beta: null,
+        FI: null, Ha0: null, betaopt: null, denom: null },
+  m2: { perdidas: null, fs: null },
+  obstaculos: [],
+  sectoresCubiertos: {},
+  locationName: ''   // nombre de la ubicación elegida en el buscador
+};
+
+// ============================================================
+// BÚSQUEDA DE UBICACIONES (Nominatim/OpenStreetMap)
+// ============================================================
+let searchTimeout;
+let currentRequest = null;
+
+async function searchLocations(query) {
+  if(!query || query.length < 2) {
+    document.getElementById('autocomplete-results').style.display = 'none';
+    return;
+  }
+
+  // Cancelar solicitud anterior si está pendiente
+  if(currentRequest) currentRequest.abort();
+
+  const resultsDiv = document.getElementById('autocomplete-results');
+  resultsDiv.innerHTML = '<div class="location-item-loading">🔍 Buscando ubicaciones...</div>';
+  resultsDiv.style.display = 'block';
+
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(async () => {
+    try {
+      // Nominatim API: requiere User-Agent
+      const controller = new AbortController();
+      currentRequest = controller;
+
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&addressdetails=1&email=fvcalc@utn.edu.ar`;
+      
+      const response = await fetch(url, { signal: controller.signal });
+
+      if(!response.ok) throw new Error(`HTTP ${response.status}`);
+      const locations = await response.json();
+
+      if(locations.length === 0) {
+        resultsDiv.innerHTML = '<div class="location-item-error">No se encontraron resultados</div>';
+        return;
+      }
+
+      let html = '';
+      locations.forEach(loc => {
+        const lat = parseFloat(loc.lat).toFixed(4);
+        const lon = parseFloat(loc.lon).toFixed(4);
+        const name = loc.address?.city || loc.address?.town || loc.address?.county || loc.name || 'Ubicación desconocida';
+        const country = loc.address?.country || '';
+        const fullName = country ? `${name}, ${country}` : name;
+
+        html += `
+          <div class="location-item" onclick="selectLocation('${lat}', '${lon}', '${fullName.replace(/'/g, "\\'")}')">
+            <div class="location-item-name">${fullName}</div>
+            <div class="location-item-coords">φ=${lat}° | λ=${lon}°</div>
+          </div>
+        `;
+      });
+
+      resultsDiv.innerHTML = html;
+      resultsDiv.style.display = 'block';
+    } catch(err) {
+      if(err.name !== 'AbortError') {
+        resultsDiv.innerHTML = `<div class="location-item-error">Error: ${err.message}</div>`;
+      }
+    }
+  }, 500); // Esperar 500ms después de que el usuario deje de escribir
+}
+
+function selectLocation(lat, lon, name) {
+  document.getElementById('lat').value = lat;
+  document.getElementById('lon').value = lon;
+  document.getElementById('location-search').value = name;
+  document.getElementById('autocomplete-results').style.display = 'none';
+  state.locationName = name;   // guardar para el PDF
+  
+  // Mostrar feedback visual
+  const latInput = document.getElementById('lat');
+  latInput.style.borderColor = 'var(--accent3)';
+  setTimeout(() => {
+    latInput.style.borderColor = '';
+  }, 1500);
+}
+
+// Cerrar autocomplete cuando se hace clic fuera
+document.addEventListener('click', (e) => {
+  if(e.target.id !== 'location-search' && e.target.id !== 'autocomplete-results') {
+    document.getElementById('autocomplete-results').style.display = 'none';
+  }
+});
+
+// ============================================================
+// UI — TABS
+// ============================================================
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['m1','m2','res'][i] === id);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if(id === 'res') updateResumenTab();
+}
+
+// ============================================================
+// MÓDULO 1
+// ============================================================
+async function fetchNASA() {
+  const lat = parseFloat(document.getElementById('lat').value);
+  const lon = parseFloat(document.getElementById('lon').value);
+  if(isNaN(lat)||isNaN(lon)) { alert('Ingresá latitud y longitud primero'); return; }
+
+  const spinner = document.getElementById('nasa-spinner');
+  const resDiv  = document.getElementById('nasa-result');
+  spinner.style.display = 'inline-block';
+  resDiv.innerHTML = '<span style="color:var(--text2)">Consultando NASA POWER — año 2024...</span>';
+
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  // Intento 1: datos mensuales 2024 (ALLSKY_SFC_SW_DWN = irradiación global horizontal)
+  try {
+    const url = `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&start=2024&end=2024&format=JSON`;
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const monthly = data.properties.parameter.ALLSKY_SFC_SW_DWN;
+
+    // La API mensual incluye campo ANN = promedio anual ya calculado
+    const entries = Object.entries(monthly);
+    const annEntry = entries.find(([k]) => k === 'ANN');
+    const monthEntries = entries.filter(([k]) => k !== 'ANN' && parseFloat(k) >= 202401);
+
+    let hda0;
+    if(annEntry && annEntry[1] > 0) {
+      hda0 = annEntry[1]; // usar ANN directo
+    } else {
+      // calcular promedio de los 12 meses
+      const vals = monthEntries.map(([,v]) => v).filter(v => v > 0);
+      hda0 = vals.reduce((a,b) => a+b, 0) / vals.length;
+    }
+
+    document.getElementById('hda0').value = hda0.toFixed(2);
+
+    // Tabla mensual
+    let tablaHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;">
+      <tr style="color:var(--text3)">`;
+    meses.forEach(m => tablaHTML += `<th style="padding:3px 4px;text-align:center">${m}</th>`);
+    tablaHTML += `<th style="padding:3px 4px;text-align:center;color:var(--accent)">ANN</th></tr><tr>`;
+    monthEntries.forEach(([,v]) => {
+      tablaHTML += `<td style="padding:3px 4px;text-align:center;color:var(--text)">${v.toFixed(2)}</td>`;
+    });
+    tablaHTML += `<td style="padding:3px 4px;text-align:center;font-weight:700;color:var(--accent)">${hda0.toFixed(2)}</td></tr></table>`;
+
+    resDiv.innerHTML = `
+      <span style="color:var(--accent3)">✓ NASA POWER 2024 — ALLSKY_SFC_SW_DWN [kWh/m²/día]</span>
+      ${tablaHTML}
+      <small style="color:var(--text3)">Hda(0) = ${hda0.toFixed(2)} kWh/m²/día → cargado arriba ↑</small>`;
+
+    spinner.style.display = 'none';
+    return;
+  } catch(e1) {
+    // Intento 2: climatología multianual como fallback
+    try {
+      resDiv.innerHTML = '<span style="color:var(--text2)">2024 no disponible, probando climatología multianual...</span>';
+      const url2 = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&format=JSON`;
+      const resp2 = await fetch(url2);
+      if(!resp2.ok) throw new Error(`HTTP ${resp2.status}`);
+      const data2 = await resp2.json();
+      const clim = data2.properties.parameter.ALLSKY_SFC_SW_DWN;
+      const hda0 = clim['ANN'];
+      document.getElementById('hda0').value = hda0.toFixed(2);
+
+      let tablaHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;"><tr style="color:var(--text3)">`;
+      meses.forEach(m => tablaHTML += `<th style="padding:3px 4px;text-align:center">${m}</th>`);
+      tablaHTML += `<th style="padding:3px 4px;text-align:center;color:var(--accent)">ANN</th></tr><tr>`;
+      meses.forEach((_,i) => {
+        const k = String(i+1).padStart(2,'0');
+        tablaHTML += `<td style="padding:3px 4px;text-align:center;color:var(--text)">${(clim[k]||0).toFixed(2)}</td>`;
+      });
+      tablaHTML += `<td style="padding:3px 4px;text-align:center;font-weight:700;color:var(--accent)">${hda0.toFixed(2)}</td></tr></table>`;
+
+      resDiv.innerHTML = `
+        <span style="color:var(--accent)">⚠ Usando climatología multianual (2024 no disponible) — ALLSKY_SFC_SW_DWN [kWh/m²/día]</span>
+        ${tablaHTML}
+        <small style="color:var(--text3)">Hda(0) = ${hda0.toFixed(2)} kWh/m²/día → cargado arriba ↑</small>`;
+    } catch(e2) {
+      resDiv.innerHTML = `<span style="color:var(--danger)">✗ No se pudo conectar con NASA POWER (${e2.message}). Ingresá Hda(0) manualmente.</span>`;
+    }
+  }
+  spinner.style.display = 'none';
+}
+
+function calcM1() {
+  const lat  = parseFloat(document.getElementById('lat').value);
+  const hda0 = parseFloat(document.getElementById('hda0').value);
+  const alpha= parseFloat(document.getElementById('alpha').value);
+  const beta = parseFloat(document.getElementById('beta').value);
+
+  if([lat,hda0,alpha,beta].some(isNaN)) { alert('Completá todos los campos del Módulo 1'); return; }
+
+  const phi = lat;
+  const Ha0 = hda0 * 365;
+  const betaopt = 3.7 + 0.69 * Math.abs(phi);
+  const denom = 1 - 4.46e-4*betaopt - 1.19e-4*betaopt*betaopt;
+  const Habopt = Ha0 / denom;
+
+  let FI;
+  if(beta > 15) {
+    FI = 1 - (1.2e-4 * Math.pow(beta - betaopt, 2) + 3.5e-5 * alpha*alpha);
+  } else {
+    FI = 1 - 3.5e-5 * alpha*alpha;
+  }
+
+  const Habeta = FI * Habopt;
+  const perdidas = (1 - Habeta/Habopt)*100;
+
+  state.m1 = {
+    perdidas, habeta: Habeta, habopt: Habopt,
+    lat, lon: parseFloat(document.getElementById('lon').value) || null,
+    hda0, alpha, beta, FI, Ha0, betaopt, denom
+  };
+
+  const div = document.getElementById('steps-m1');
+  div.innerHTML = `
+    <div class="step-title">a) Irradiación anual horizontal</div>
+    <div class="formula">Ha(0) = Hda(0) × 365 = ${hda0} × 365 = <strong>${Ha0.toFixed(2)} kWh/m²/año</strong></div>
+    <div class="step-title">b) Inclinación óptima</div>
+    <div class="formula">βopt = 3,7 + 0,69 × |φ| = 3,7 + 0,69 × ${Math.abs(phi).toFixed(2)} = <strong>${betaopt.toFixed(1)}°</strong></div>
+    <div class="step-title">c) Irradiación con inclinación óptima</div>
+    <div class="formula">Ha(βopt) = Ha(0) / (1 − 4,46×10⁻⁴·βopt − 1,19×10⁻⁴·βopt²) = ${Ha0.toFixed(2)} / ${denom.toFixed(4)} = <strong>${Habopt.toFixed(2)} kWh/m²/año</strong></div>
+    <div class="step-title">d) Factor de irradiación FI ${beta>15?'(β>15°)':'(β≤15°)'}</div>
+    <div class="formula">${beta>15
+      ? `FI = 1 − [1,2×10⁻⁴ × (β−βopt)² + 3,5×10⁻⁵ × α²] = 1 − [1,2×10⁻⁴ × ${Math.pow(beta-betaopt,2).toFixed(2)} + 3,5×10⁻⁵ × ${(alpha*alpha).toFixed(0)}] = <strong>${FI.toFixed(4)}</strong>`
+      : `FI = 1 − 3,5×10⁻⁵ × α² = 1 − 3,5×10⁻⁵ × ${(alpha*alpha).toFixed(0)} = <strong>${FI.toFixed(4)}</strong>`
+    }</div>
+    <div class="step-title">e) Irradiación real sobre el panel</div>
+    <div class="formula">Ha(α,β) = FI × Ha(βopt) = ${FI.toFixed(4)} × ${Habopt.toFixed(2)} = <strong>${Habeta.toFixed(2)} kWh/m²/año</strong></div>
+    <div class="step-title">f) Pérdidas por orientación e inclinación</div>
+    <div class="formula">Pérdidas M1 = (1 − Ha(α,β)/Ha(βopt)) × 100 = (1 − FI) × 100 = <strong>${perdidas.toFixed(2)}%</strong></div>
+  `;
+
+  const status = perdidas <= 10 ? 'ok' : 'bad';
+  document.getElementById('badge-m1').innerHTML =
+    `<span class="badge badge-${status}">${status==='ok'?'✓':'✗'} ${perdidas.toFixed(2)}% — Criterio ≤10%: ${status==='ok'?'CUMPLE':'NO CUMPLE'}</span>`;
+
+  document.getElementById('result-m1').style.display = 'block';
+}
+
+// ============================================================
+// MÓDULO 2 — OBSTÁCULOS
+// ============================================================
+let obsCount = 0;
+
+function addObsRow() {
+  obsCount++;
+  const tbody = document.getElementById('obs-body');
+  const tr = document.createElement('tr');
+  tr.id = `obs-row-${obsCount}`;
+  tr.innerHTML = `
+    <td style="font-weight:700;color:var(--text2);">${obsCount}</td>
+    <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-df-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
+    <td><input type="text" id="obs-dl-${obsCount}" placeholder="+ / −" oninput="calcObsRow(${obsCount})" style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;" data-numpad="dl"></td>
+    <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-do-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
+    <td><input type="number" inputmode="decimal" step="0.1" placeholder="18" id="obs-h-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
+    <td class="calc-cell" id="obs-az-${obsCount}">—</td>
+    <td class="calc-cell" id="obs-el-${obsCount}">—</td>
+    <td><button class="remove-btn" onclick="removeObsRow(${obsCount})">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  calcObsRow(obsCount);
+  npAttachDl(`obs-dl-${obsCount}`);
+}
+
+function removeObsRow(id) {
+  const row = document.getElementById(`obs-row-${id}`);
+  if(row) row.remove();
+}
+
+function calcObsRow(id) {
+  const df  = parseFloat(document.getElementById(`obs-df-${id}`)?.value);
+  const dlRaw = (document.getElementById(`obs-dl-${id}`)?.value||'').replace(',','.');
+  const dl  = parseFloat(dlRaw);
+  const dob = parseFloat(document.getElementById(`obs-do-${id}`)?.value);
+  const hob = parseFloat(document.getElementById(`obs-h-${id}`)?.value);
+  const hpanel = parseFloat(document.getElementById('h-panel').value) || 4;
+
+  if([df,dl,dob,hob].some(isNaN)) return;
+
+  const az = Math.atan2(dl, df) * 180/Math.PI;
+  const hEfectiva = hob - hpanel;
+  const elev = Math.atan2(Math.max(0, hEfectiva), dob) * 180/Math.PI;
+
+  document.getElementById(`obs-az-${id}`).textContent = az.toFixed(1)+'°';
+  document.getElementById(`obs-el-${id}`).textContent = elev.toFixed(1)+'°';
+}
+
+// ============================================================
+// RESULTADO COMBINADO
+// ============================================================
+// ============================================================
+// MÓDULO 2 — TABLA DE SECTORES (ingreso manual)
+// ============================================================
+let sectorCount = 0;
+
+const SECTOR_OPTIONS = (() => {
+  const nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14];
+  const letras = ['A','B','C','D'];
+  const opts = ['<option value="">—</option>'];
+  for(const n of nums) {
+    for(const l of letras) {
+      if(l==='D' && n>8) continue;
+      if(l==='C' && n>10) continue;
+      if(l==='B' && n>12) continue;
+      opts.push(`<option value="${n}${l}">${n}${l}</option>`);
+    }
+  }
+  return opts.join('');
+})();
+
+function addSectorRow() {
+  sectorCount++;
+  const tbody = document.getElementById('sector-body');
+  const tr = document.createElement('tr');
+  tr.id = `sec-row-${sectorCount}`;
+  const id = sectorCount;
+  tr.innerHTML = `
+    <td style="padding:6px 4px;">
+      <select id="sec-nombre-${id}" style="padding:5px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
+        ${SECTOR_OPTIONS}
+      </select>
+    </td>
+    <td style="padding:6px 4px;">
+      <input type="number" step="0.001" min="0" placeholder="ej: 2.36" id="sec-pct-${id}"
+        oninput="recalcSectorRow(${id})"
+        style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
+    </td>
+    <td style="padding:6px 4px;">
+      <input type="number" step="0.01" min="0" max="1" placeholder="ej: 0.75" id="sec-fr-${id}"
+        oninput="recalcSectorRow(${id})"
+        style="width:80px;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
+    </td>
+    <td style="padding:6px 4px;font-family:monospace;font-weight:600;color:var(--accent);" id="sec-res-${id}">—</td>
+    <td style="padding:6px 2px;">
+      <button style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:var(--danger);border-radius:6px;cursor:pointer;font-size:14px;padding:3px 8px;font-weight:700;" onclick="removeSectorRow(${id})">×</button>
+    </td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function removeSectorRow(id) {
+  const row = document.getElementById(`sec-row-${id}`);
+  if(row) { row.remove(); calcM2(); }
+}
+
+function recalcSectorRow(id) {
+  const pct = parseFloat(document.getElementById(`sec-pct-${id}`)?.value);
+  const fr  = parseFloat(document.getElementById(`sec-fr-${id}`)?.value);
+  const cell = document.getElementById(`sec-res-${id}`);
+  if(!isNaN(pct) && !isNaN(fr)) {
+    cell.textContent = (pct * fr).toFixed(3) + '%';
+  } else {
+    cell.textContent = '—';
+  }
+  calcM2();
+}
+
+function calcM2() {
+  let total = 0;
+  let filas = 0;
+  const rows = document.querySelectorAll('#sector-body tr');
+  rows.forEach(row => {
+    const id = row.id?.replace('sec-row-','');
+    if(!id) return;
+    const pct = parseFloat(document.getElementById(`sec-pct-${id}`)?.value);
+    const fr  = parseFloat(document.getElementById(`sec-fr-${id}`)?.value);
+    if(!isNaN(pct) && !isNaN(fr)) { total += pct * fr; filas++; }
+  });
+
+  if(filas === 0) {
+    document.getElementById('result-m2-boxes').style.display = 'none';
+    state.m2 = { perdidas: null, fs: null };
+    return;
+  }
+
+  const FS = 1 - total / 100;
+  state.m2 = { perdidas: total, fs: FS };
+
+  const st1 = total <= 10 ? 'ok' : 'bad';
+  document.getElementById('m2-pct-display').textContent = total.toFixed(2) + '%';
+  document.getElementById('m2-pct-display').style.color = st1==='ok' ? 'var(--accent3)' : 'var(--danger)';
+  document.getElementById('m2-fs-display').textContent = FS.toFixed(4);
+  document.getElementById('m2-badge').innerHTML =
+    `<span class="badge badge-${st1}">${st1==='ok'?'✓':'✗'} ${total.toFixed(2)}% — ${st1==='ok'?'CUMPLE':'NO CUMPLE'}</span>`;
+
+  const m1p = state.m1.perdidas;
+  if(m1p !== null) {
+    const totalComb = m1p + total;
+    const st2 = totalComb <= 15 ? 'ok' : 'bad';
+    document.getElementById('m2-total-display').textContent = totalComb.toFixed(2) + '%';
+    document.getElementById('m2-total-display').style.color = st2==='ok' ? 'var(--accent3)' : 'var(--danger)';
+    document.getElementById('m2-total-badge').innerHTML =
+      `<span class="badge badge-${st2}">${st2==='ok'?'✓':'✗'} ${totalComb.toFixed(2)}% — ${st2==='ok'?'CUMPLE':'NO CUMPLE'}</span>`;
+  } else {
+    document.getElementById('m2-total-display').textContent = '—';
+    document.getElementById('m2-total-display').style.color = 'var(--text)';
+    document.getElementById('m2-total-badge').innerHTML =
+      `<span style="font-size:12px;color:var(--text3);">Calculá primero el Módulo 1</span>`;
+  }
+
+  document.getElementById('result-m2-boxes').style.display = 'block';
+}
+
+// ============================================================
+function updateTablaSelector() {
+  // Placeholder para cuando se agreguen más provincias
+}
+
+function updateResumenTab() {
+  const m1v = document.getElementById('res-m1-val');
+  const m2v = document.getElementById('res-m2-val');
+  const habv= document.getElementById('res-habeta-val');
+
+  if(state.m1.perdidas !== null) {
+    m1v.textContent = state.m1.perdidas.toFixed(2) + '%';
+    habv.textContent = state.m1.habeta.toFixed(2) + ' kWh/m²/año';
+  }
+  if(state.m2.perdidas !== null) {
+    m2v.textContent = state.m2.perdidas.toFixed(2) + '%';
+  }
+}
+
+function calcCombinado() {
+  if(state.m1.perdidas === null) { alert('Primero calculá el Módulo 1'); return; }
+
+  const habeta = state.m1.habeta;
+  const habopt = state.m1.habopt;
+  const m1p    = state.m1.perdidas;
+  const m2p    = state.m2.perdidas ?? 0;
+  const fs     = state.m2.fs ?? 1;
+
+  const haEfectiva = habeta * fs;
+  const perdidasTotales = m1p + m2p;
+
+  const status1 = m1p <= 10  ? 'ok' : 'bad';
+  const status2 = m2p <= 10  ? 'ok' : 'bad';
+  const statusT = perdidasTotales <= 15 ? 'ok' : 'bad';
+
+  document.getElementById('result-combinado').innerHTML = `
+    <div class="combined-box">
+      <div class="combined-title">📊 Resultado final</div>
+      <div class="result-box">
+        <div class="result-row">
+          <span class="label">Ha(βopt) — con inclinación óptima</span>
+          <span class="value">${habopt.toFixed(2)} kWh/m²/año</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Ha(α,β) — irradiación real del panel</span>
+          <span class="value">${habeta.toFixed(2)} kWh/m²/año</span>
+        </div>
+        <div class="result-row">
+          <span class="label">FS = 1 − p/100</span>
+          <span class="value">${fs.toFixed(4)}</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Ha efectiva = Ha(α,β) × FS</span>
+          <span class="value" style="color:var(--accent3);font-size:16px">${haEfectiva.toFixed(2)} kWh/m²/año</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+        <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-width:130px;">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Pérdidas M1</div>
+          <div class="big-number" style="color:${status1==='ok'?'var(--accent3)':'var(--danger)'}">
+            ${m1p.toFixed(1)}%
+          </div>
+          <span class="badge badge-${status1}" style="margin-top:6px">${status1==='ok'?'≤10% ✓':'> 10% ✗'}</span>
+        </div>
+        <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-width:130px;">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Pérdidas M2</div>
+          <div class="big-number" style="color:${status2==='ok'?'var(--accent3)':'var(--danger)'}">
+            ${m2p.toFixed(1)}%
+          </div>
+          <span class="badge badge-${status2}" style="margin-top:6px">${status2==='ok'?'≤10% ✓':'> 10% ✗'}</span>
+        </div>
+        <div style="flex:1;background:var(--surface);border:2px solid ${statusT==='ok'?'var(--accent3)':'var(--danger)'};border-radius:10px;padding:14px;min-width:130px;">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Pérdidas totales</div>
+          <div class="big-number" style="color:${statusT==='ok'?'var(--accent3)':'var(--danger)'}">
+            ${perdidasTotales.toFixed(1)}%
+          </div>
+          <span class="badge badge-${statusT}" style="margin-top:6px">${statusT==='ok'?'≤15% ✓':'> 15% ✗'}</span>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;font-size:12px;color:var(--text3);">
+        Criterios: IDAE (España) y Manual de Generación Distribuida de Argentina.<br>
+        Fórmulas: Castejón Oliva &amp; Santamaría Herranz (2010).
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// EXPORTAR PDF — Módulo 1 (Orientación e Inclinación + Ubicación)
+// ============================================================
+function exportarPDFM1() {
+  if (!state.m1 || state.m1.perdidas === null) {
+    alert('Calculá el Módulo 1 primero');
+    return;
+  }
+  if (typeof window.jspdf === 'undefined') {
+    alert('La librería PDF todavía se está cargando. Intentá en unos segundos.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  // ── Datos del formulario / state ──
+  const { lat, lon, hda0, alpha, beta, FI, Ha0, betaopt, denom, habopt, habeta, perdidas } = state.m1;
+  const locationName = state.locationName ||
+    document.getElementById('location-search')?.value || '';
+  const prov = document.getElementById('provincia')?.selectedOptions[0]?.text || '—';
+
+  // ── Constantes de layout ──
+  const W = 210, H = 297, ML = 15, MR = 15;
+  let y = 0;
+
+  // ── Paleta ──
+  const cPrimary   = [26,  54,  93];
+  const cSecondary = [43, 108, 176];
+  const cGreen     = [39, 174,  96];
+  const cRed       = [231, 76,  60];
+  const cGrayBg    = [245, 247, 250];
+  const cGrayLine  = [220, 226, 234];
+  const cText      = [30,  41,  59];
+  const cLight     = [100, 116, 139];
+  const cWhite     = [255, 255, 255];
+
+  // ── Helpers ──
+  function sf(size, style, col) {
+    doc.setFontSize(size);
+    doc.setFont('helvetica', style || 'normal');
+    doc.setTextColor(...(col || cText));
+  }
+  function rect(x, yy, w, h, col, stroke) {
+    doc.setFillColor(...col);
+    doc.rect(x, yy, w, h, stroke ? 'FD' : 'F');
+  }
+  function hline(yy, col) {
+    doc.setDrawColor(...(col || cGrayLine));
+    doc.setLineWidth(0.25);
+    doc.line(ML, yy, W - MR, yy);
+  }
+  function checkY(need) {
+    if (y + (need || 10) > H - 14) { doc.addPage(); y = 14; }
+  }
+
+  // ════════════════════════════════════════════
+  // ENCABEZADO
+  // ════════════════════════════════════════════
+  rect(0, 0, W, 30, cPrimary);
+  sf(15, 'bold', cWhite);
+  doc.text('☀  Reporte — Módulo 1: Orientación e Inclinación', ML, 11);
+  sf(8.5, 'normal', [180, 210, 240]);
+  doc.text('Calculadora Fotovoltaica · UTN FRC · Ing. J. Bordino / Téc. M. Méndez', ML, 18);
+  const ahora = new Date();
+  const fecha = ahora.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const hora  = ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  sf(8, 'normal', [160, 190, 220]);
+  doc.text(`Generado: ${fecha}  ${hora}`, ML, 25);
+  y = 36;
+
+  // ════════════════════════════════════════════
+  // SECCIÓN 1 — UBICACIÓN
+  // ════════════════════════════════════════════
+  rect(ML, y, W - ML - MR, 7, cSecondary);
+  sf(10, 'bold', cWhite);
+  doc.text('1. Datos de Ubicación', ML + 3, y + 5);
+  y += 9;
+
+  // Fila: nombre de ubicación (ancho completo)
+  if (locationName) {
+    rect(ML, y, W - ML - MR, 9, cGrayBg);
+    sf(8, 'bold', cLight); doc.text('Ubicación', ML + 2, y + 6);
+    sf(9, 'bold', cSecondary); doc.text(locationName, ML + 30, y + 6);
+    y += 10;
+  }
+
+  // Filas: lat / lon / hda0 / provincia
+  const ubData = [
+    [['Latitud φ', `${lat}°`], ['Longitud λ', `${lon}°`]],
+    [['Hda(0) NASA POWER', `${hda0} kWh/m²/día`], ['Provincia (M2)', prov]],
+  ];
+  ubData.forEach((row, ri) => {
+    const bg = ri % 2 === 0 ? cGrayBg : [238, 242, 248];
+    rect(ML, y, W - ML - MR, 9, bg);
+    const mid = W / 2;
+    sf(8, 'bold', cLight);   doc.text(row[0][0], ML + 2, y + 6);
+    sf(9, 'normal', cText);  doc.text(row[0][1], ML + 38, y + 6);
+    sf(8, 'bold', cLight);   doc.text(row[1][0], mid + 2, y + 6);
+    sf(9, 'normal', cText);  doc.text(row[1][1], mid + 38, y + 6);
+    y += 10;
+  });
+  y += 5;
+
+  // ════════════════════════════════════════════
+  // SECCIÓN 2 — PARÁMETROS DEL PANEL
+  // ════════════════════════════════════════════
+  checkY(40);
+  rect(ML, y, W - ML - MR, 7, cSecondary);
+  sf(10, 'bold', cWhite);
+  doc.text('2. Parámetros del Panel', ML + 3, y + 5);
+  y += 9;
+
+  const panelData = [
+    [['Acimut α', `${alpha}°  (0°=norte/sur, +este, −oeste)`], ['Inclinación β', `${beta}°  (0°=horizontal, 90°=vertical)`]],
+    [['Inclinación óptima βopt', `${betaopt.toFixed(1)}°  = 3,7 + 0,69 × |φ|`], ['', '']],
+  ];
+  panelData.forEach((row, ri) => {
+    rect(ML, y, W - ML - MR, 9, ri % 2 === 0 ? cGrayBg : [238, 242, 248]);
+    const mid = W / 2;
+    sf(8, 'bold', cLight);  doc.text(row[0][0], ML + 2, y + 6);
+    sf(8.5, 'normal', cText); doc.text(row[0][1], ML + 42, y + 6);
+    if (row[1][0]) {
+      sf(8, 'bold', cLight);    doc.text(row[1][0], mid + 2, y + 6);
+      sf(8.5, 'normal', cText); doc.text(row[1][1], mid + 42, y + 6);
+    }
+    y += 10;
+  });
+  y += 5;
+
+  // ════════════════════════════════════════════
+  // SECCIÓN 3 — DESARROLLO PASO A PASO
+  // ════════════════════════════════════════════
+  checkY(15);
+  rect(ML, y, W - ML - MR, 7, cSecondary);
+  sf(10, 'bold', cWhite);
+  doc.text('3. Desarrollo del Cálculo', ML + 3, y + 5);
+  y += 9;
+
+  const pasos = [
+    {
+      letra: 'a)',
+      titulo: 'Irradiación anual horizontal',
+      formula: `Ha(0) = Hda(0) × 365 = ${hda0} × 365 = ${Ha0.toFixed(2)} kWh/m²/año`,
+    },
+    {
+      letra: 'b)',
+      titulo: 'Inclinación óptima según latitud',
+      formula: `βopt = 3,7 + 0,69 × |φ| = 3,7 + 0,69 × ${Math.abs(lat).toFixed(4)} = ${betaopt.toFixed(2)}°`,
+    },
+    {
+      letra: 'c)',
+      titulo: 'Irradiación con inclinación óptima',
+      formula: `Ha(βopt) = Ha(0) / (1 − 4,46×10⁻⁴·βopt − 1,19×10⁻⁴·βopt²)`,
+      sub:     `= ${Ha0.toFixed(2)} / ${denom.toFixed(6)} = ${habopt.toFixed(2)} kWh/m²/año`,
+    },
+    {
+      letra: 'd)',
+      titulo: beta > 15 ? 'Factor de irradiación FI  (β > 15°)' : 'Factor de irradiación FI  (β ≤ 15°)',
+      formula: beta > 15
+        ? `FI = 1 − [1,2×10⁻⁴ × (β−βopt)² + 3,5×10⁻⁵ × α²]`
+        : `FI = 1 − 3,5×10⁻⁵ × α²`,
+      sub: beta > 15
+        ? `= 1 − [1,2×10⁻⁴ × ${Math.pow(beta - betaopt, 2).toFixed(4)} + 3,5×10⁻⁵ × ${(alpha * alpha).toFixed(4)}] = ${FI.toFixed(6)}`
+        : `= 1 − 3,5×10⁻⁵ × ${(alpha * alpha).toFixed(4)} = ${FI.toFixed(6)}`,
+    },
+    {
+      letra: 'e)',
+      titulo: 'Irradiación real sobre el plano del captador',
+      formula: `Ha(α,β) = FI × Ha(βopt) = ${FI.toFixed(6)} × ${habopt.toFixed(2)} = ${habeta.toFixed(2)} kWh/m²/año`,
+    },
+    {
+      letra: 'f)',
+      titulo: 'Pérdidas por orientación e inclinación',
+      formula: `Pérdidas M1 = (1 − Ha(α,β) / Ha(βopt)) × 100 = (1 − FI) × 100`,
+      sub:     `= (1 − ${FI.toFixed(6)}) × 100 = ${perdidas.toFixed(4)}%`,
+      highlight: true,
+    },
+  ];
+
+  pasos.forEach((p, i) => {
+    const bg = i % 2 === 0 ? cGrayBg : [238, 242, 248];
+    const rowH = p.sub ? 18 : 12;
+    checkY(rowH + 2);
+
+    rect(ML, y, W - ML - MR, rowH, p.highlight ? [225, 245, 255] : bg);
+    if (p.highlight) {
+      doc.setDrawColor(...cSecondary);
+      doc.setLineWidth(0.5);
+      doc.rect(ML, y, W - ML - MR, rowH, 'S');
+    }
+
+    // Letra
+    sf(9, 'bold', cSecondary);
+    doc.text(p.letra, ML + 2, y + 5.5);
+
+    // Título
+    sf(8, 'bold', cLight);
+    doc.text(p.titulo, ML + 10, y + 5.5);
+
+    // Fórmula
+    sf(8.5, 'normal', cText);
+    const fLines = doc.splitTextToSize(p.formula, W - ML - MR - 12);
+    doc.text(fLines, ML + 10, y + (p.sub ? 10.5 : 5.5 + (fLines.length > 1 ? 0 : 4)));
+
+    // Sub (resultado)
+    if (p.sub) {
+      sf(9, 'bold', p.highlight ? cSecondary : cText);
+      doc.text(p.sub, ML + 10, y + 15);
+    }
+
+    y += rowH + 2;
+  });
+
+  y += 4;
+
+  // ════════════════════════════════════════════
+  // SECCIÓN 4 — RESULTADO Y CRITERIO
+  // ════════════════════════════════════════════
+  checkY(60);
+  rect(ML, y, W - ML - MR, 7, cPrimary);
+  sf(10, 'bold', cWhite);
+  doc.text('4. Resultado Final', ML + 3, y + 5);
+  y += 9;
+
+  // Tres cajas: Ha(0) / Ha(βopt) / Ha(α,β)
+  const bw = (W - ML - MR - 8) / 3;
+  const bxs = [ML, ML + bw + 4, ML + 2 * (bw + 4)];
+  const cajas = [
+    { label: 'Ha(0)', val: Ha0.toFixed(2), unit: 'kWh/m²/año', col: cLight },
+    { label: 'Ha(βopt)', val: habopt.toFixed(2), unit: 'kWh/m²/año', col: cSecondary },
+    { label: 'Ha(α,β)', val: habeta.toFixed(2), unit: 'kWh/m²/año', col: [230, 126, 34] },
+  ];
+  cajas.forEach((c, i) => {
+    rect(bxs[i], y, bw, 26, cGrayBg);
+    doc.setDrawColor(...c.col); doc.setLineWidth(0.6);
+    doc.rect(bxs[i], y, bw, 26, 'S');
+    sf(7.5, 'normal', cLight); doc.text(c.label, bxs[i] + bw / 2, y + 6, { align: 'center' });
+    sf(13, 'bold', c.col);     doc.text(c.val,   bxs[i] + bw / 2, y + 17, { align: 'center' });
+    sf(7,  'normal', cLight);  doc.text(c.unit,  bxs[i] + bw / 2, y + 23, { align: 'center' });
+  });
+  y += 30;
+
+  // Badge principal: CUMPLE / NO CUMPLE
+  checkY(18);
+  const ok = perdidas <= 10;
+  const badgeCol = ok ? cGreen : cRed;
+  const badgeBg  = ok ? [232, 255, 244] : [255, 235, 235];
+  rect(ML, y, W - ML - MR, 14, badgeBg);
+  doc.setDrawColor(...badgeCol); doc.setLineWidth(0.7);
+  doc.rect(ML, y, W - ML - MR, 14, 'S');
+  sf(12, 'bold', badgeCol);
+  doc.text(
+    `${ok ? '✓' : '✗'}   Pérdidas M1 = ${perdidas.toFixed(2)}%   —   Criterio ≤ 10%: ${ok ? 'CUMPLE' : 'NO CUMPLE'}`,
+    W / 2, y + 9, { align: 'center' }
+  );
+  y += 18;
+
+  // FI y Ha(α,β) detallado
+  checkY(10);
+  rect(ML, y, W - ML - MR, 9, [240, 248, 255]);
+  doc.setDrawColor(...cSecondary); doc.setLineWidth(0.3);
+  doc.rect(ML, y, W - ML - MR, 9, 'S');
+  sf(8.5, 'normal', cText);
+  doc.text(
+    `FI = ${FI.toFixed(4)}   |   Ha(α,β) = ${habeta.toFixed(2)} kWh/m²/año   |   Ha(βopt) = ${habopt.toFixed(2)} kWh/m²/año`,
+    W / 2, y + 6, { align: 'center' }
+  );
+  y += 13;
+
+  // Nota metodológica
+  checkY(12);
+  sf(7.5, 'italic', cLight);
+  doc.text(
+    'Fórmulas: Castejón Oliva & Santamaría Herranz (2010). Irradiación: NASA POWER (ALLSKY_SFC_SW_DWN).',
+    W / 2, y, { align: 'center' }
+  );
+  y += 5;
+  sf(7.5, 'italic', cLight);
+  doc.text(
+    'Criterio: IDAE (España) y Manual de Generación Distribuida de Argentina.',
+    W / 2, y, { align: 'center' }
+  );
+
+  // ── Pie de página en todas las páginas ──
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    rect(0, H - 10, W, 10, cPrimary);
+    sf(7, 'normal', [180, 200, 230]);
+    doc.text('Calculadora Fotovoltaica — UTN FRC', ML, H - 4);
+    doc.text(`Página ${p} de ${totalPages}`, W - MR, H - 4, { align: 'right' });
+    doc.text('pablo-ieno.github.io/AppFVieno/', W / 2, H - 4, { align: 'center' });
+  }
+
+  // ── Nombre del archivo ──
+  const latStr = String(lat).replace('.', 'p').replace('-', 'S');
+  const lonStr = String(lon).replace('.', 'p').replace('-', 'O');
+  doc.save(`reporte_M1_lat${latStr}_lon${lonStr}_${fecha.replace(/\//g, '-')}.pdf`);
+}
+
+// ============================================================
+// INICIALIZACIÓN
+// ============================================================
+window.addEventListener('load', () => {
+  addObsRow();
+  addObsRow();
+  addObsRow();
+  addSectorRow();
+
+  // Registrar Service Worker (PWA) — solo en el dominio real, no en previsualizaciones
+  if ('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com') {
+    navigator.serviceWorker.register('service-worker.js')
+      .catch(err => console.warn('SW no registrado:', err));
+  }
+});
+</script>
+
+<!-- ═══ TECLADO NUMÉRICO CUSTOM ═══ -->
+<div id="numpad-overlay">
+  <div id="numpad-header">
+    <span id="numpad-label">—</span>
+    <span id="numpad-preview" class="ph">—</span>
+    <button id="numpad-close" onclick="npClose()">✕</button>
+  </div>
+  <div id="numpad-keys">
+    <button class="npk" onclick="npKey('7')">7</button>
+    <button class="npk" onclick="npKey('8')">8</button>
+    <button class="npk" onclick="npKey('9')">9</button>
+    <button class="npk act" onclick="npDel()">⌫</button>
+
+    <button class="npk" onclick="npKey('4')">4</button>
+    <button class="npk" onclick="npKey('5')">5</button>
+    <button class="npk" onclick="npKey('6')">6</button>
+    <button class="npk sign" id="npk-sign" onclick="npSign()">+/−</button>
+
+    <button class="npk" onclick="npKey('1')">1</button>
+    <button class="npk" onclick="npKey('2')">2</button>
+    <button class="npk" onclick="npKey('3')">3</button>
+    <button class="npk act" onclick="npKey('.')">.</button>
+
+    <button class="npk act" onclick="npClear()">C</button>
+    <button class="npk" onclick="npKey('0')">0</button>
+    <button class="npk act" onclick="npKey('00')">00</button>
+    <button class="npk ok" onclick="npConfirm()">OK ✓</button>
+  </div>
+</div>
+
+<script>
+// ═══ LÓGICA TECLADO NUMÉRICO CUSTOM ═══
+let _npEl  = null;   // input activo
+let _npVal = '';     // valor en construcción
+// IDs que admiten negativo
+const NP_NEG = new Set(['lat','lon','alpha']);
+
+function npOpen(el, label, allowNeg) {
+  _npEl  = el;
+  _npVal = el.value.trim();
+  document.getElementById('numpad-label').textContent   = label || '—';
+  document.getElementById('npk-sign').style.visibility = allowNeg ? 'visible' : 'hidden';
+  npUpdatePreview();
+  document.getElementById('numpad-overlay').classList.add('visible');
+  document.body.classList.add('np-open');
+  // Scroll al campo
+  setTimeout(() => el.scrollIntoView({ behavior:'smooth', block:'center' }), 80);
+}
+
+function npClose() {
+  if (_npEl) {
+    _npEl.value = _npVal;
+    _npEl.dispatchEvent(new Event('input', { bubbles: true }));
+    _npEl.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  document.getElementById('numpad-overlay').classList.remove('visible');
+  document.body.classList.remove('np-open');
+  _npEl = null;
+}
+
+function npConfirm() { npClose(); }
+
+function npKey(ch) {
+  if (ch === '.' && _npVal.includes('.')) return;
+  if (ch === '00') {
+    if (_npVal === '' || _npVal === '-') return;
+  }
+  if (ch === '0' && (_npVal === '0' || _npVal === '-0')) {
+    _npVal += '.'; npUpdatePreview(); return;
+  }
+  _npVal += ch;
+  npUpdatePreview();
+}
+
+function npDel()   { _npVal = _npVal.slice(0,-1); npUpdatePreview(); }
+function npClear() { _npVal = ''; npUpdatePreview(); }
+
+function npSign() {
+  if (_npVal.startsWith('-')) { _npVal = _npVal.slice(1); }
+  else if (_npVal !== '' && _npVal !== '0') { _npVal = '-' + _npVal; }
+  else { _npVal = '-'; }
+  npUpdatePreview();
+}
+
+function npUpdatePreview() {
+  const prev = document.getElementById('numpad-preview');
+  if (_npVal === '' || _npVal === '-') {
+    prev.textContent = _npVal || '—';
+    prev.classList.add('ph');
+  } else {
+    prev.textContent = _npVal;
+    prev.classList.remove('ph');
+  }
+  if (_npEl) { _npEl.value = _npVal; }
+}
+
+// Detectar si es dispositivo táctil (móvil/tablet)
+// Se evalúa una sola vez al cargar
+const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// Adjuntar numpad a un campo fijo (lat, lon, alpha)
+function npAttach(id, label) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!IS_TOUCH) return;
+  const allowNeg = NP_NEG.has(id);
+  el.setAttribute('readonly', 'readonly');
+  const open = (e) => { e.preventDefault(); e.stopPropagation(); npOpen(el, label, allowNeg); };
+  el.addEventListener('touchstart', open, { passive: false });
+  el.addEventListener('click', () => npOpen(el, label, allowNeg));
+}
+
+// Para obs-dl: delegación global con data-numpad="dl"
+// El campo se marca con data-numpad en el HTML del template,
+// así el navegador nunca puede abrir su teclado nativo.
+function initObsDlDelegate() {
+  if (!IS_TOUCH) return;
+
+  // Fase de captura: intercepta el touchstart antes que el input
+  document.addEventListener('touchstart', e => {
+    const el = e.target;
+    if (el.dataset && el.dataset.numpad === 'dl') {
+      e.preventDefault();
+      // Asegurar readonly para bloquear teclado nativo
+      el.setAttribute('readonly', 'readonly');
+      npOpen(el, 'Desp. lateral (m)', true);
+    }
+  }, { capture: true, passive: false });
+}
+
+// npAttachDl: aplica readonly al campo cuando se crea la fila
+// (necesario para que el campo ya tenga readonly antes del primer toque)
+function npAttachDl(id) {
+  if (!IS_TOUCH) return;
+  const el = document.getElementById(id);
+  if (el) el.setAttribute('readonly', 'readonly');
+}
+
+window.addEventListener('load', () => {
+  npAttach('lat',   'Latitud φ (°)');
+  npAttach('lon',   'Longitud (°)');
+  npAttach('alpha', 'Acimut α (°)');
+  initObsDlDelegate();
+});
+</script>
+
+</body>
+</html>
