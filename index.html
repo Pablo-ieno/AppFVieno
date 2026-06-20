@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0f1117">
+<meta name="theme-color" content="#f7f9f6">
+<meta name="color-scheme" content="light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,34 +13,22 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Calculadora Fotovoltaica</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #22263a;
-    --border: #2e3352;
-    --accent: #f59e0b;
-    --accent2: #3b82f6;
-    --accent3: #10b981;
-    --danger: #ef4444;
-    --text: #e2e8f0;
-    --text2: #94a3b8;
-    --text3: #64748b;
+    /* Modo claro forzado — fondo blanco/gris muy claro, naranja solar protagonista, verde acento */
+    --bg: #f7f9f6;
+    --surface: #ffffff;
+    --surface2: #f1f5ef;
+    --border: #dde5da;
+    --accent: #ea8c0a;
+    --accent2: #16a34a;
+    --accent3: #15803d;
+    --danger: #dc2626;
+    --text: #1f2922;
+    --text2: #4b5c4f;
+    --text3: #75887a;
     --radius: 12px;
-    --shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #f1f5f9;
-      --surface: #ffffff;
-      --surface2: #f8fafc;
-      --border: #e2e8f0;
-      --text: #1e293b;
-      --text2: #475569;
-      --text3: #94a3b8;
-      --shadow: 0 4px 24px rgba(0,0,0,0.08);
-    }
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -133,7 +122,7 @@
   .btn-primary { background: var(--accent); color: #000; }
   .btn-primary:hover { background: #d97706; }
   .btn-secondary { background: var(--accent2); color: #fff; }
-  .btn-secondary:hover { background: #2563eb; }
+  .btn-secondary:hover { background: #15803d; }
   .btn-sm { padding: 6px 12px; font-size: 12px; }
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
   .result-box {
@@ -195,7 +184,7 @@
   .sector-badge {
     display: inline-block; padding: 2px 8px;
     border-radius: 4px; font-size: 12px; font-weight: 700;
-    background: rgba(59,130,246,0.15); color: var(--accent2);
+    background: rgba(22,163,74,0.15); color: var(--accent2);
   }
 
   /* ---- TABLA DE SECTORES CUBIERTOS ---- */
@@ -219,7 +208,7 @@
 
   /* ---- RESULTADO COMBINADO ---- */
   .combined-box {
-    background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(59,130,246,0.08));
+    background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(22,163,74,0.08));
     border: 1px solid var(--accent);
     border-radius: 12px; padding: 20px; margin-top: 16px;
   }
@@ -237,7 +226,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .info-box {
-    background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.3);
+    background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.3);
     border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text2);
     margin-bottom: 12px;
   }
@@ -256,7 +245,7 @@
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 9999;
-    background: #1a1d27;
+    background: var(--surface);
     border-top: 2px solid var(--accent);
     box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
     user-select: none; -webkit-user-select: none;
@@ -265,7 +254,7 @@
   #numpad-header {
     display: flex; align-items: center;
     padding: 4px 10px; gap: 8px;
-    background: #13151f;
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
     min-height: 34px;
   }
@@ -289,56 +278,19 @@
     gap: 1px; background: var(--border);
   }
   .npk {
-    background: #22263a; border: none; color: var(--text);
+    background: var(--surface2); border: none; color: var(--text);
     font-size: 18px; font-weight: 500;
     padding: 12px 0; line-height: 1;
     cursor: pointer; touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
-  .npk:active { background: #2e3352; }
-  .npk.act  { background: #2e3352; color: var(--text2); font-size: 13px; }
-  .npk.act:active { background: #3a4060; }
+  .npk:active { background: var(--border); }
+  .npk.act  { background: var(--border); color: var(--text2); font-size: 13px; }
+  .npk.act:active { background: var(--accent2); }
   .npk.sign { color: var(--accent); font-size: 13px; font-weight: 700; }
   .npk.ok   { background: var(--accent); color: #000; font-size: 14px; font-weight: 700; }
   .npk.ok:active { background: #d97706; }
   body.np-open { padding-bottom: 190px; }
-
-  /* ---- AUTOCOMPLETE LOCATION SEARCH ---- */
-  .location-item {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background-color 0.15s;
-    font-size: 13px;
-    color: var(--text);
-  }
-  .location-item:hover {
-    background: var(--surface2);
-  }
-  .location-item:last-child {
-    border-bottom: none;
-  }
-  .location-item-name {
-    font-weight: 600;
-    color: var(--accent);
-  }
-  .location-item-coords {
-    font-size: 11px;
-    color: var(--text3);
-    margin-top: 2px;
-    font-family: monospace;
-  }
-  .location-item-loading {
-    padding: 10px 12px;
-    color: var(--text2);
-    font-size: 12px;
-    font-style: italic;
-  }
-  .location-item-error {
-    padding: 10px 12px;
-    color: var(--danger);
-    font-size: 12px;
-  }
 </style>
 </head>
 <body>
@@ -354,6 +306,7 @@
   <div class="tabs">
     <button class="tab active" onclick="switchTab('m1')">Módulo 1 — Orientación e Inclinación</button>
     <button class="tab" onclick="switchTab('m2')">Módulo 2 — Sombreado</button>
+    <button class="tab" onclick="switchTab('m3')">Módulo 3 — Corrección por Temperatura</button>
     <button class="tab" onclick="switchTab('res')">Resultado Combinado</button>
   </div>
 
@@ -362,48 +315,34 @@
 
     <div class="card">
       <div class="card-title">📍 Ubicación y datos solares</div>
-      
-      <!-- BUSCADOR DE UBICACIÓN -->
-      <div class="field" style="margin-bottom: 14px;">
-        <label>Buscar ubicación en el mundo</label>
-        <div style="position: relative;">
-          <input type="text" inputmode="text" id="location-search" placeholder="Ej: Córdoba, Argentina  |  Madrid, España  |  São Paulo, Brasil" 
-                 style="width: 100%; padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px;"
-                 oninput="searchLocations(this.value)">
-          <div id="autocomplete-results" style="
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 220px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            box-shadow: var(--shadow);
-          "></div>
-        </div>
-        <span class="hint">Escribe una ciudad o provincia para cargar automáticamente latitud y longitud</span>
-      </div>
-
       <div class="form-grid">
         <div class="field">
           <label>Latitud φ (°)</label>
           <input type="text" inputmode="decimal" id="lat" placeholder="-31.42">
-          <span class="hint">Negativo en hemisferio sur</span>
+          <span class="hint">φ = latitud del lugar. Negativo en hemisferio sur</span>
         </div>
         <div class="field">
           <label>Longitud (°)</label>
           <input type="text" inputmode="decimal" id="lon" placeholder="-64.18">
+          <span class="hint">Negativo al oeste del meridiano de Greenwich</span>
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="field">
+          <label>Año desde</label>
+          <input type="number" inputmode="numeric" id="nasaYearFrom" placeholder="2014" step="1">
+          <span class="hint">Primer año del rango a promediar en NASA POWER</span>
+        </div>
+        <div class="field">
+          <label>Año hasta</label>
+          <input type="number" inputmode="numeric" id="nasaYearTo" placeholder="2024" step="1">
+          <span class="hint">Último año del rango a promediar en NASA POWER</span>
         </div>
       </div>
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="fetchNASA()">
           <span id="nasa-spinner" style="display:none" class="spinner"></span>
-          Obtener Hda(0) de NASA POWER (2024)
+          Obtener Hda(0) de NASA POWER (promedio del rango)
         </button>
       </div>
       <div id="nasa-result" style="margin-top:10px; font-size:13px; color:var(--text2);"></div>
@@ -412,7 +351,7 @@
         <div class="field">
           <label>Hda(0) [kWh/m²/día]</label>
           <input type="number" inputmode="decimal" id="hda0" placeholder="5.07" step="0.01">
-          <span class="hint">O ingresá manualmente</span>
+          <span class="hint">Hda(0) = irradiación global diaria media anual sobre plano horizontal. O ingresá manualmente</span>
         </div>
       </div>
     </div>
@@ -423,12 +362,12 @@
         <div class="field">
           <label>Acimut α (°)</label>
           <input type="text" inputmode="decimal" id="alpha" placeholder="0">
-          <span class="hint">0°=sur/norte, +este, −oeste</span>
+          <span class="hint">α = acimut del panel. 0°=sur/norte, +este, −oeste</span>
         </div>
         <div class="field">
           <label>Inclinación β (°)</label>
           <input type="text" inputmode="decimal" id="beta" placeholder="30">
-          <span class="hint">0°=horizontal, 90°=vertical</span>
+          <span class="hint">β = inclinación real del panel. 0°=horizontal, 90°=vertical</span>
         </div>
       </div>
       <div class="btn-row">
@@ -441,9 +380,6 @@
         <div class="card-title">📊 Resultados — Módulo 1</div>
         <div id="steps-m1"></div>
         <div id="badge-m1" style="margin-top:12px;"></div>
-        <div class="btn-row" style="margin-top:16px;">
-          <button class="btn btn-secondary" onclick="exportarPDFM1()">📄 Exportar PDF</button>
-        </div>
       </div>
     </div>
 
@@ -495,6 +431,7 @@
             <option value="75">75°</option>
             <option value="90">90°</option>
           </select>
+          <span class="hint">β del panel, usado para elegir la tabla de sectores del Anexo V</span>
         </div>
         <div class="field">
           <label>Acimut panel Y (°)</label>
@@ -593,6 +530,133 @@
         </div>
       </div>
 
+    </div>
+
+  </div>
+
+  <!-- ===== MÓDULO 3 — CORRECCIÓN POR TEMPERATURA ===== -->
+  <div id="panel-m3" class="panel">
+
+    <div class="card">
+      <div class="card-title">🌡️ Datos de temperatura</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Ta para tensión máxima (°C)</label>
+          <input type="text" inputmode="decimal" id="m3-ta" placeholder="-10">
+          <span class="hint">Ta = temperatura ambiente. Usá −10°C para chequear U_inv(máx) según criterio de cátedra</span>
+        </div>
+        <div class="field">
+          <label>Ta para corriente máxima (°C)</label>
+          <input type="text" inputmode="decimal" id="m3-ta-isc" placeholder="70">
+          <span class="hint">Usá 70°C para chequear I_inv(máx) según criterio de cátedra</span>
+        </div>
+        <div class="field">
+          <label>Irradiancia G (W/m²)</label>
+          <input type="text" inputmode="decimal" id="m3-g" placeholder="1000">
+          <span class="hint">G = irradiancia incidente sobre el panel (1000 W/m² = peor caso STC)</span>
+        </div>
+        <div class="field">
+          <label>TONC (°C)</label>
+          <input type="text" inputmode="decimal" id="m3-tonc" placeholder="45">
+          <span class="hint">TONC (o NOCT) = Temp. de Operación Nominal de la Célula. Dato de fabricante (típico 44–48°C)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Datos del panel (condiciones STC = Standard Test Conditions: 25°C, 1000 W/m², AM 1.5)</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Voc_stc (V)</label>
+          <input type="text" inputmode="decimal" id="m3-voc" placeholder="37.0">
+          <span class="hint">Tensión de circuito abierto en STC (ficha técnica del panel)</span>
+        </div>
+        <div class="field">
+          <label>Isc_stc (A)</label>
+          <input type="text" inputmode="decimal" id="m3-isc" placeholder="8.42">
+          <span class="hint">Corriente de cortocircuito en STC (ficha técnica del panel)</span>
+        </div>
+        <div class="field">
+          <label>Pmpp_stc (W)</label>
+          <input type="text" inputmode="decimal" id="m3-pmpp" placeholder="235">
+          <span class="hint">Potencia máxima en STC (ficha técnica del panel)</span>
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="field">
+          <label>Coef. temperatura β de Voc (%/°C)</label>
+          <input type="text" inputmode="decimal" id="m3-beta" placeholder="-0.33">
+          <span class="hint">Negativo. Dato de fabricante (típico −0,30 a −0,45 %/°C)</span>
+        </div>
+        <div class="field">
+          <label>Coef. temperatura α de Isc (%/°C)</label>
+          <input type="text" inputmode="decimal" id="m3-alpha" placeholder="0.056">
+          <span class="hint">Positivo. Dato de fabricante (típico +0,03 a +0,06 %/°C)</span>
+        </div>
+        <div class="field">
+          <label>Coef. temperatura γ de Pmpp (%/°C)</label>
+          <input type="text" inputmode="decimal" id="m3-gamma" placeholder="-0.43">
+          <span class="hint">Negativo. Dato de fabricante (típico −0,35 a −0,45 %/°C)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔌 Configuración del generador (string)</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Paneles en serie por string</label>
+          <input type="number" inputmode="numeric" id="m3-nserie" placeholder="12" step="1" min="1">
+          <span class="hint">Cantidad de paneles conectados en serie en un mismo string (la tensión se suma)</span>
+        </div>
+        <div class="field">
+          <label>Strings en paralelo</label>
+          <input type="number" inputmode="numeric" id="m3-nparalelo" placeholder="2" step="1" min="1">
+          <span class="hint">Cantidad de strings en paralelo (la corriente se suma)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ Datos del inversor (ficha técnica)</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Potencia nominal Pinv (W)</label>
+          <input type="text" inputmode="decimal" id="m3-pinv" placeholder="5000">
+          <span class="hint">Pinv = potencia nominal AC del inversor</span>
+        </div>
+        <div class="field">
+          <label>Tensión máxima de entrada U_inv(máx) (V)</label>
+          <input type="text" inputmode="decimal" id="m3-uinvmax" placeholder="500">
+          <span class="hint">Tensión máxima admisible en la entrada CC del inversor</span>
+        </div>
+        <div class="field">
+          <label>Corriente máxima de entrada I_inv(máx) (A)</label>
+          <input type="text" inputmode="decimal" id="m3-iinvmax" placeholder="18">
+          <span class="hint">Corriente máxima admisible en la entrada CC del inversor</span>
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="field">
+          <label>Rango MPPT — mínimo (V)</label>
+          <input type="text" inputmode="decimal" id="m3-mpptmin" placeholder="120">
+          <span class="hint">Tensión mínima de operación del seguidor MPPT</span>
+        </div>
+        <div class="field">
+          <label>Rango MPPT — máximo (V)</label>
+          <input type="text" inputmode="decimal" id="m3-mpptmax" placeholder="450">
+          <span class="hint">Tensión máxima de operación del seguidor MPPT</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="calcM3()">Calcular y verificar dimensionado</button>
+      </div>
+    </div>
+
+    <div class="card" id="m3-resultado-card" style="display:none;">
+      <div class="card-title">🔢 Desarrollo del cálculo</div>
+      <div id="steps-m3"></div>
+      <div id="badge-m3" style="margin-top:14px;"></div>
     </div>
 
   </div>
@@ -1163,107 +1227,19 @@ const ALL_SECTORS = [
 // ESTADO GLOBAL
 // ============================================================
 let state = {
-  m1: { perdidas: null, habeta: null, habopt: null,
-        lat: null, lon: null, hda0: null, alpha: null, beta: null,
-        FI: null, Ha0: null, betaopt: null, denom: null },
+  m1: { perdidas: null, habeta: null, habopt: null },
   m2: { perdidas: null, fs: null },
+  m3: { Tm: null, Voc_Tm: null, Isc_Tm: null, Pmpp_Tm: null },
   obstaculos: [],
-  sectoresCubiertos: {},
-  locationName: ''   // nombre de la ubicación elegida en el buscador
+  sectoresCubiertos: {}
 };
-
-// ============================================================
-// BÚSQUEDA DE UBICACIONES (Nominatim/OpenStreetMap)
-// ============================================================
-let searchTimeout;
-let currentRequest = null;
-
-async function searchLocations(query) {
-  if(!query || query.length < 2) {
-    document.getElementById('autocomplete-results').style.display = 'none';
-    return;
-  }
-
-  // Cancelar solicitud anterior si está pendiente
-  if(currentRequest) currentRequest.abort();
-
-  const resultsDiv = document.getElementById('autocomplete-results');
-  resultsDiv.innerHTML = '<div class="location-item-loading">🔍 Buscando ubicaciones...</div>';
-  resultsDiv.style.display = 'block';
-
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(async () => {
-    try {
-      // Nominatim API: requiere User-Agent
-      const controller = new AbortController();
-      currentRequest = controller;
-
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&addressdetails=1&email=fvcalc@utn.edu.ar`;
-      
-      const response = await fetch(url, { signal: controller.signal });
-
-      if(!response.ok) throw new Error(`HTTP ${response.status}`);
-      const locations = await response.json();
-
-      if(locations.length === 0) {
-        resultsDiv.innerHTML = '<div class="location-item-error">No se encontraron resultados</div>';
-        return;
-      }
-
-      let html = '';
-      locations.forEach(loc => {
-        const lat = parseFloat(loc.lat).toFixed(4);
-        const lon = parseFloat(loc.lon).toFixed(4);
-        const name = loc.address?.city || loc.address?.town || loc.address?.county || loc.name || 'Ubicación desconocida';
-        const country = loc.address?.country || '';
-        const fullName = country ? `${name}, ${country}` : name;
-
-        html += `
-          <div class="location-item" onclick="selectLocation('${lat}', '${lon}', '${fullName.replace(/'/g, "\\'")}')">
-            <div class="location-item-name">${fullName}</div>
-            <div class="location-item-coords">φ=${lat}° | λ=${lon}°</div>
-          </div>
-        `;
-      });
-
-      resultsDiv.innerHTML = html;
-      resultsDiv.style.display = 'block';
-    } catch(err) {
-      if(err.name !== 'AbortError') {
-        resultsDiv.innerHTML = `<div class="location-item-error">Error: ${err.message}</div>`;
-      }
-    }
-  }, 500); // Esperar 500ms después de que el usuario deje de escribir
-}
-
-function selectLocation(lat, lon, name) {
-  document.getElementById('lat').value = lat;
-  document.getElementById('lon').value = lon;
-  document.getElementById('location-search').value = name;
-  document.getElementById('autocomplete-results').style.display = 'none';
-  state.locationName = name;   // guardar para el PDF
-  
-  // Mostrar feedback visual
-  const latInput = document.getElementById('lat');
-  latInput.style.borderColor = 'var(--accent3)';
-  setTimeout(() => {
-    latInput.style.borderColor = '';
-  }, 1500);
-}
-
-// Cerrar autocomplete cuando se hace clic fuera
-document.addEventListener('click', (e) => {
-  if(e.target.id !== 'location-search' && e.target.id !== 'autocomplete-results') {
-    document.getElementById('autocomplete-results').style.display = 'none';
-  }
-});
 
 // ============================================================
 // UI — TABS
 // ============================================================
 function switchTab(id) {
   document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', ['m1','m2','res'][i] === id);
+    t.classList.toggle('active', ['m1','m2','m3','res'][i] === id);
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
@@ -1278,58 +1254,65 @@ async function fetchNASA() {
   const lon = parseFloat(document.getElementById('lon').value);
   if(isNaN(lat)||isNaN(lon)) { alert('Ingresá latitud y longitud primero'); return; }
 
+  const yearFrom = parseInt(document.getElementById('nasaYearFrom').value, 10);
+  const yearTo   = parseInt(document.getElementById('nasaYearTo').value, 10);
+  if(isNaN(yearFrom) || isNaN(yearTo)) { alert('Ingresá Año desde y Año hasta'); return; }
+  if(yearFrom > yearTo) { alert('"Año desde" no puede ser mayor que "Año hasta"'); return; }
+
   const spinner = document.getElementById('nasa-spinner');
   const resDiv  = document.getElementById('nasa-result');
   spinner.style.display = 'inline-block';
-  resDiv.innerHTML = '<span style="color:var(--text2)">Consultando NASA POWER — año 2024...</span>';
+  resDiv.innerHTML = `<span style="color:var(--text2)">Consultando NASA POWER — años ${yearFrom} a ${yearTo}...</span>`;
 
-  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-
-  // Intento 1: datos mensuales 2024 (ALLSKY_SFC_SW_DWN = irradiación global horizontal)
   try {
-    const url = `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&start=2024&end=2024&format=JSON`;
+    // Pide todo el rango de años en una sola consulta mensual
+    const url = `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&start=${yearFrom}&end=${yearTo}&format=JSON`;
     const resp = await fetch(url);
     if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     const monthly = data.properties.parameter.ALLSKY_SFC_SW_DWN;
-
-    // La API mensual incluye campo ANN = promedio anual ya calculado
     const entries = Object.entries(monthly);
-    const annEntry = entries.find(([k]) => k === 'ANN');
-    const monthEntries = entries.filter(([k]) => k !== 'ANN' && parseFloat(k) >= 202401);
 
-    let hda0;
-    if(annEntry && annEntry[1] > 0) {
-      hda0 = annEntry[1]; // usar ANN directo
-    } else {
-      // calcular promedio de los 12 meses
-      const vals = monthEntries.map(([,v]) => v).filter(v => v > 0);
-      hda0 = vals.reduce((a,b) => a+b, 0) / vals.length;
-    }
+    // Tomar el promedio anual de cada año del rango.
+    // La API Monthly/Annual usa el sufijo "13" para el dato anual (ej. "202013" = anual de 2020),
+    // no "ANN" como en la API de climatología.
+    const annPorAnio = entries
+      .filter(([k]) => /^\d{4}13$/.test(k))
+      .map(([k,v]) => ({ anio: parseInt(k.slice(0,4),10), val: v }))
+      .filter(e => e.val > 0 && e.val !== -999)
+      .sort((a,b) => a.anio - b.anio);
 
+    if(annPorAnio.length === 0) throw new Error('Sin datos anuales para el rango solicitado');
+
+    const hda0 = annPorAnio.reduce((acc,e) => acc + e.val, 0) / annPorAnio.length;
     document.getElementById('hda0').value = hda0.toFixed(2);
 
-    // Tabla mensual
+    // Aviso si falta algún año del rango pedido
+    const aniosEsperados = yearTo - yearFrom + 1;
+    const avisoFaltantes = annPorAnio.length < aniosEsperados
+      ? `<div style="color:var(--accent);margin-top:4px;">⚠ Se promediaron ${annPorAnio.length} de ${aniosEsperados} años solicitados (algunos sin dato disponible).</div>`
+      : '';
+
+    // Tabla: un valor ANN por año
     let tablaHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;">
       <tr style="color:var(--text3)">`;
-    meses.forEach(m => tablaHTML += `<th style="padding:3px 4px;text-align:center">${m}</th>`);
-    tablaHTML += `<th style="padding:3px 4px;text-align:center;color:var(--accent)">ANN</th></tr><tr>`;
-    monthEntries.forEach(([,v]) => {
-      tablaHTML += `<td style="padding:3px 4px;text-align:center;color:var(--text)">${v.toFixed(2)}</td>`;
+    annPorAnio.forEach(e => tablaHTML += `<th style="padding:3px 4px;text-align:center">${e.anio}</th>`);
+    tablaHTML += `<th style="padding:3px 4px;text-align:center;color:var(--accent)">Promedio</th></tr><tr>`;
+    annPorAnio.forEach(e => {
+      tablaHTML += `<td style="padding:3px 4px;text-align:center;color:var(--text)">${e.val.toFixed(2)}</td>`;
     });
     tablaHTML += `<td style="padding:3px 4px;text-align:center;font-weight:700;color:var(--accent)">${hda0.toFixed(2)}</td></tr></table>`;
 
     resDiv.innerHTML = `
-      <span style="color:var(--accent3)">✓ NASA POWER 2024 — ALLSKY_SFC_SW_DWN [kWh/m²/día]</span>
+      <span style="color:var(--accent3)">✓ NASA POWER ${yearFrom}–${yearTo} — promedio ALLSKY_SFC_SW_DWN [kWh/m²/día]</span>
+      ${avisoFaltantes}
       ${tablaHTML}
-      <small style="color:var(--text3)">Hda(0) = ${hda0.toFixed(2)} kWh/m²/día → cargado arriba ↑</small>`;
+      <small style="color:var(--text3)">Hda(0) = promedio de ${annPorAnio.length} año(s) = ${hda0.toFixed(2)} kWh/m²/día → cargado arriba ↑</small>`;
 
-    spinner.style.display = 'none';
-    return;
   } catch(e1) {
-    // Intento 2: climatología multianual como fallback
+    // Fallback: climatología multianual (promedio histórico fijo de NASA, no editable por rango)
     try {
-      resDiv.innerHTML = '<span style="color:var(--text2)">2024 no disponible, probando climatología multianual...</span>';
+      resDiv.innerHTML = '<span style="color:var(--text2)">Rango no disponible, probando climatología multianual...</span>';
       const url2 = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&format=JSON`;
       const resp2 = await fetch(url2);
       if(!resp2.ok) throw new Error(`HTTP ${resp2.status}`);
@@ -1338,6 +1321,7 @@ async function fetchNASA() {
       const hda0 = clim['ANN'];
       document.getElementById('hda0').value = hda0.toFixed(2);
 
+      const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
       let tablaHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;"><tr style="color:var(--text3)">`;
       meses.forEach(m => tablaHTML += `<th style="padding:3px 4px;text-align:center">${m}</th>`);
       tablaHTML += `<th style="padding:3px 4px;text-align:center;color:var(--accent)">ANN</th></tr><tr>`;
@@ -1348,7 +1332,7 @@ async function fetchNASA() {
       tablaHTML += `<td style="padding:3px 4px;text-align:center;font-weight:700;color:var(--accent)">${hda0.toFixed(2)}</td></tr></table>`;
 
       resDiv.innerHTML = `
-        <span style="color:var(--accent)">⚠ Usando climatología multianual (2024 no disponible) — ALLSKY_SFC_SW_DWN [kWh/m²/día]</span>
+        <span style="color:var(--accent)">⚠ Usando climatología multianual (rango ${yearFrom}–${yearTo} no disponible) — ALLSKY_SFC_SW_DWN [kWh/m²/día]</span>
         ${tablaHTML}
         <small style="color:var(--text3)">Hda(0) = ${hda0.toFixed(2)} kWh/m²/día → cargado arriba ↑</small>`;
     } catch(e2) {
@@ -1382,11 +1366,7 @@ function calcM1() {
   const Habeta = FI * Habopt;
   const perdidas = (1 - Habeta/Habopt)*100;
 
-  state.m1 = {
-    perdidas, habeta: Habeta, habopt: Habopt,
-    lat, lon: parseFloat(document.getElementById('lon').value) || null,
-    hda0, alpha, beta, FI, Ha0, betaopt, denom
-  };
+  state.m1 = { perdidas, habeta: Habeta, habopt: Habopt };
 
   const div = document.getElementById('steps-m1');
   div.innerHTML = `
@@ -1579,6 +1559,147 @@ function calcM2() {
 }
 
 // ============================================================
+// MÓDULO 3 — CORRECCIÓN POR TEMPERATURA
+// ============================================================
+function calcM3() {
+  const Ta     = parseFloat(document.getElementById('m3-ta').value);
+  const TaIsc  = parseFloat(document.getElementById('m3-ta-isc').value);
+  const G      = parseFloat(document.getElementById('m3-g').value);
+  const TONC   = parseFloat(document.getElementById('m3-tonc').value);
+  const Vocs   = parseFloat(document.getElementById('m3-voc').value);
+  const Iscs   = parseFloat(document.getElementById('m3-isc').value);
+  const Pmpps  = parseFloat(document.getElementById('m3-pmpp').value);
+  const betaPct  = parseFloat(document.getElementById('m3-beta').value);
+  const alphaPct = parseFloat(document.getElementById('m3-alpha').value);
+  const gammaPct = parseFloat(document.getElementById('m3-gamma').value);
+  const nSerie     = parseInt(document.getElementById('m3-nserie').value, 10);
+  const nParalelo  = parseInt(document.getElementById('m3-nparalelo').value, 10);
+  const Pinv     = parseFloat(document.getElementById('m3-pinv').value);
+  const UinvMax  = parseFloat(document.getElementById('m3-uinvmax').value);
+  const IinvMax  = parseFloat(document.getElementById('m3-iinvmax').value);
+  const MpptMin  = parseFloat(document.getElementById('m3-mpptmin').value);
+  const MpptMax  = parseFloat(document.getElementById('m3-mpptmax').value);
+
+  if([Ta,TaIsc,G,TONC,Vocs,Iscs,Pmpps,betaPct,alphaPct,gammaPct].some(isNaN)) {
+    alert('Completá todos los campos de temperatura y datos del panel del Módulo 3');
+    return;
+  }
+  if(isNaN(nSerie) || isNaN(nParalelo) || nSerie < 1 || nParalelo < 1) {
+    alert('Completá "Paneles en serie por string" y "Strings en paralelo" (mínimo 1 cada uno)');
+    return;
+  }
+  if([Pinv,UinvMax,IinvMax,MpptMin,MpptMax].some(isNaN)) {
+    alert('Completá todos los datos del inversor para verificar el dimensionado');
+    return;
+  }
+
+  // Coeficientes en tanto por uno (la ficha técnica los da en %/°C)
+  const beta  = betaPct  / 100;
+  const alpha = alphaPct / 100;
+  const gamma = gammaPct / 100;
+
+  // a) Temperatura del módulo — caso tensión máxima (usa Ta, típicamente -10°C)
+  const Tm = Ta + ((TONC - 20) / 800) * G;
+  // a') Temperatura del módulo — caso corriente máxima (usa TaIsc, típicamente 70°C)
+  const TmIsc = TaIsc + ((TONC - 20) / 800) * G;
+
+  // b) Corrección de Voc (por panel, a Tm de tensión máxima)
+  const Voc_Tm = Vocs * (1 + beta * (Tm - 25));
+
+  // c) Corrección de Isc (por panel, a TmIsc de corriente máxima)
+  const Isc_Tm = Iscs * (1 + alpha * (TmIsc - 25));
+
+  // d) Corrección de Pmpp (por panel, usando Tm de tensión como referencia general)
+  const Pmpp_Tm = Pmpps * (1 + gamma * (Tm - 25));
+
+  // e) Valores del generador completo (string serie × paralelo)
+  const Voc_gen  = Voc_Tm  * nSerie;                  // la tensión se suma en serie
+  const Isc_gen  = Isc_Tm  * nParalelo;               // la corriente se suma en paralelo
+  const Pmpp_gen = Pmpp_Tm * nSerie * nParalelo;       // potencia total del generador
+
+  const div = document.getElementById('steps-m3');
+  div.innerHTML = `
+    <div class="step-title">a) Temperatura del módulo — caso tensión máxima (Ta = ${Ta}°C)</div>
+    <div class="formula">Tm = Ta + [(TONC − 20) / 800] × G = ${Ta} + [(${TONC} − 20) / 800] × ${G} = <strong>${Tm.toFixed(2)} °C</strong></div>
+
+    <div class="step-title">a') Temperatura del módulo — caso corriente máxima (Ta = ${TaIsc}°C)</div>
+    <div class="formula">Tm = Ta + [(TONC − 20) / 800] × G = ${TaIsc} + [(${TONC} − 20) / 800] × ${G} = <strong>${TmIsc.toFixed(2)} °C</strong></div>
+
+    <div class="step-title">b) Corrección de Voc (por panel, a Tm = ${Tm.toFixed(2)}°C)</div>
+    <div class="formula">Voc(Tm) = Voc_stc × [1 + β × (Tm − 25)] = ${Vocs} × [1 + (${betaPct}/100) × (${Tm.toFixed(2)} − 25)] = <strong>${Voc_Tm.toFixed(3)} V</strong></div>
+
+    <div class="step-title">c) Corrección de Isc (por panel, a Tm = ${TmIsc.toFixed(2)}°C)</div>
+    <div class="formula">Isc(Tm) = Isc_stc × [1 + α × (Tm − 25)] = ${Iscs} × [1 + (${alphaPct}/100) × (${TmIsc.toFixed(2)} − 25)] = <strong>${Isc_Tm.toFixed(3)} A</strong></div>
+
+    <div class="step-title">d) Corrección de Pmpp (por panel, a Tm = ${Tm.toFixed(2)}°C)</div>
+    <div class="formula">Pmpp(Tm) = Pmpp_stc × [1 + γ × (Tm − 25)] = ${Pmpps} × [1 + (${gammaPct}/100) × (${Tm.toFixed(2)} − 25)] = <strong>${Pmpp_Tm.toFixed(2)} W</strong></div>
+
+    <div class="step-title">e) Tensión del generador (Voc del string, ${nSerie} panel(es) en serie)</div>
+    <div class="formula">Voc_gen = Voc(Tm) × N_serie = ${Voc_Tm.toFixed(3)} × ${nSerie} = <strong>${Voc_gen.toFixed(2)} V</strong></div>
+
+    <div class="step-title">f) Corriente del generador (Isc total, ${nParalelo} string(s) en paralelo)</div>
+    <div class="formula">Isc_gen = Isc(Tm) × N_paralelo = ${Isc_Tm.toFixed(3)} × ${nParalelo} = <strong>${Isc_gen.toFixed(2)} A</strong></div>
+
+    <div class="step-title">g) Potencia total del generador (${nSerie} × ${nParalelo} = ${nSerie*nParalelo} panel(es))</div>
+    <div class="formula">Pmpp_gen = Pmpp(Tm) × N_serie × N_paralelo = ${Pmpp_Tm.toFixed(2)} × ${nSerie} × ${nParalelo} = <strong>${Pmpp_gen.toFixed(2)} W</strong></div>
+  `;
+
+  // ===== Verificación de los 4 criterios de selección de inversor (Clase 6) =====
+  const c1ok = UinvMax >= Voc_gen;                                  // Tensión máxima
+  const c2ok = IinvMax >= Isc_gen;                                  // Corriente máxima
+  const c3ok = (Pinv*0.8 <= Pmpp_gen) && (Pmpp_gen <= Pinv*0.9*1.25); // margen amplio orientativo Pgen vs Pinv (0,8–0,9 typ. + holgura)
+  const c4ok = (Voc_gen >= MpptMin) && (Voc_gen <= MpptMax);         // Rango MPPT (con Voc en vacío como referencia conservadora)
+
+  const fila = (ok, texto) => `
+    <div class="result-row">
+      <span class="label">${texto}</span>
+      <span class="badge badge-${ok ? 'ok' : 'bad'}">${ok ? '✓ CUMPLE' : '✗ NO CUMPLE'}</span>
+    </div>`;
+
+  const deltaT = Tm - 25;
+  const sentido = deltaT >= 0 ? 'por encima de' : 'por debajo de';
+  document.getElementById('badge-m3').innerHTML = `
+    <div class="result-box">
+      <div class="result-row"><span class="label">Tm (tensión máxima, Ta=${Ta}°C)</span><span class="value">${Tm.toFixed(2)} °C</span></div>
+      <div class="result-row"><span class="label">Tm (corriente máxima, Ta=${TaIsc}°C)</span><span class="value">${TmIsc.toFixed(2)} °C</span></div>
+      <div class="result-row"><span class="label">Voc(Tm) — por panel</span><span class="value">${Voc_Tm.toFixed(3)} V</span></div>
+      <div class="result-row"><span class="label">Isc(Tm) — por panel</span><span class="value">${Isc_Tm.toFixed(3)} A</span></div>
+      <div class="result-row"><span class="label">Pmpp(Tm) — por panel</span><span class="value">${Pmpp_Tm.toFixed(2)} W</span></div>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text3);">
+      Tm está ${Math.abs(deltaT).toFixed(1)}°C ${sentido} la temperatura de referencia STC (25°C).
+    </div>
+
+    <div class="card-title" style="margin-top:20px;">🔌 Generador completo (${nSerie} en serie × ${nParalelo} en paralelo = ${nSerie*nParalelo} paneles)</div>
+    <div class="result-box">
+      <div class="result-row"><span class="label">Voc_gen</span><span class="value" style="color:var(--accent);font-size:16px">${Voc_gen.toFixed(2)} V</span></div>
+      <div class="result-row"><span class="label">Isc_gen</span><span class="value" style="color:var(--accent);font-size:16px">${Isc_gen.toFixed(2)} A</span></div>
+      <div class="result-row"><span class="label">Pmpp_gen</span><span class="value" style="color:var(--accent3);font-size:16px">${Pmpp_gen.toFixed(2)} W</span></div>
+    </div>
+
+    <div class="card-title" style="margin-top:20px;">⚡ Verificación de compatibilidad con el inversor</div>
+    <div class="result-box">
+      ${fila(c1ok, `U_inv(máx) ≥ Voc_gen  →  ${UinvMax} V ≥ ${Voc_gen.toFixed(2)} V`)}
+      ${fila(c2ok, `I_inv(máx) ≥ Isc_gen  →  ${IinvMax} A ≥ ${Isc_gen.toFixed(2)} A`)}
+      ${fila(c3ok, `Pgen dentro de 0,8–1,125 × Pinv  →  Pgen = ${Pmpp_gen.toFixed(0)} W, Pinv = ${Pinv.toFixed(0)} W`)}
+      ${fila(c4ok, `Voc_gen dentro del rango MPPT  →  ${MpptMin} V ≤ ${Voc_gen.toFixed(2)} V ≤ ${MpptMax} V`)}
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--text3);">
+      Criterio de cátedra (Clase 6): U_inv(máx) ≥ Voc_gen corregida a temperatura mínima (típ. −10°C),
+      I_inv(máx) ≥ Isc_gen corregida a temperatura máxima (típ. 70°C), potencia del generador acorde a la del inversor,
+      y tensión de operación dentro del rango MPPT. El criterio de potencia es orientativo (0,8–0,9 típico, con holgura del 25% del lado superior);
+      verificá siempre contra la ficha técnica específica del inversor elegido.
+    </div>
+  `;
+
+  state.m3 = { Ta, TaIsc, G, TONC, Tm, TmIsc, Vocs, Iscs, Pmpps, beta, alpha, gamma, Voc_Tm, Isc_Tm, Pmpp_Tm,
+               nSerie, nParalelo, Voc_gen, Isc_gen, Pmpp_gen,
+               Pinv, UinvMax, IinvMax, MpptMin, MpptMax, c1ok, c2ok, c3ok, c4ok };
+
+  document.getElementById('m3-resultado-card').style.display = 'block';
+}
+
+// ============================================================
 function updateTablaSelector() {
   // Placeholder para cuando se agreguen más provincias
 }
@@ -1668,307 +1789,6 @@ function calcCombinado() {
 }
 
 // ============================================================
-// EXPORTAR PDF — Módulo 1 (Orientación e Inclinación + Ubicación)
-// ============================================================
-function exportarPDFM1() {
-  if (!state.m1 || state.m1.perdidas === null) {
-    alert('Calculá el Módulo 1 primero');
-    return;
-  }
-  if (typeof window.jspdf === 'undefined') {
-    alert('La librería PDF todavía se está cargando. Intentá en unos segundos.');
-    return;
-  }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-  // ── Datos del formulario / state ──
-  const { lat, lon, hda0, alpha, beta, FI, Ha0, betaopt, denom, habopt, habeta, perdidas } = state.m1;
-  const locationName = state.locationName ||
-    document.getElementById('location-search')?.value || '';
-  const prov = document.getElementById('provincia')?.selectedOptions[0]?.text || '—';
-
-  // ── Constantes de layout ──
-  const W = 210, H = 297, ML = 15, MR = 15;
-  let y = 0;
-
-  // ── Paleta ──
-  const cPrimary   = [26,  54,  93];
-  const cSecondary = [43, 108, 176];
-  const cGreen     = [39, 174,  96];
-  const cRed       = [231, 76,  60];
-  const cGrayBg    = [245, 247, 250];
-  const cGrayLine  = [220, 226, 234];
-  const cText      = [30,  41,  59];
-  const cLight     = [100, 116, 139];
-  const cWhite     = [255, 255, 255];
-
-  // ── Helpers ──
-  function sf(size, style, col) {
-    doc.setFontSize(size);
-    doc.setFont('helvetica', style || 'normal');
-    doc.setTextColor(...(col || cText));
-  }
-  function rect(x, yy, w, h, col, stroke) {
-    doc.setFillColor(...col);
-    doc.rect(x, yy, w, h, stroke ? 'FD' : 'F');
-  }
-  function hline(yy, col) {
-    doc.setDrawColor(...(col || cGrayLine));
-    doc.setLineWidth(0.25);
-    doc.line(ML, yy, W - MR, yy);
-  }
-  function checkY(need) {
-    if (y + (need || 10) > H - 14) { doc.addPage(); y = 14; }
-  }
-
-  // ════════════════════════════════════════════
-  // ENCABEZADO
-  // ════════════════════════════════════════════
-  rect(0, 0, W, 30, cPrimary);
-  sf(15, 'bold', cWhite);
-  doc.text('☀  Reporte — Módulo 1: Orientación e Inclinación', ML, 11);
-  sf(8.5, 'normal', [180, 210, 240]);
-  doc.text('Calculadora Fotovoltaica · UTN FRC · Ing. J. Bordino / Téc. M. Méndez', ML, 18);
-  const ahora = new Date();
-  const fecha = ahora.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
-  const hora  = ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-  sf(8, 'normal', [160, 190, 220]);
-  doc.text(`Generado: ${fecha}  ${hora}`, ML, 25);
-  y = 36;
-
-  // ════════════════════════════════════════════
-  // SECCIÓN 1 — UBICACIÓN
-  // ════════════════════════════════════════════
-  rect(ML, y, W - ML - MR, 7, cSecondary);
-  sf(10, 'bold', cWhite);
-  doc.text('1. Datos de Ubicación', ML + 3, y + 5);
-  y += 9;
-
-  // Fila: nombre de ubicación (ancho completo)
-  if (locationName) {
-    rect(ML, y, W - ML - MR, 9, cGrayBg);
-    sf(8, 'bold', cLight); doc.text('Ubicación', ML + 2, y + 6);
-    sf(9, 'bold', cSecondary); doc.text(locationName, ML + 30, y + 6);
-    y += 10;
-  }
-
-  // Filas: lat / lon / hda0 / provincia
-  const ubData = [
-    [['Latitud φ', `${lat}°`], ['Longitud λ', `${lon}°`]],
-    [['Hda(0) NASA POWER', `${hda0} kWh/m²/día`], ['Provincia (M2)', prov]],
-  ];
-  ubData.forEach((row, ri) => {
-    const bg = ri % 2 === 0 ? cGrayBg : [238, 242, 248];
-    rect(ML, y, W - ML - MR, 9, bg);
-    const mid = W / 2;
-    sf(8, 'bold', cLight);   doc.text(row[0][0], ML + 2, y + 6);
-    sf(9, 'normal', cText);  doc.text(row[0][1], ML + 38, y + 6);
-    sf(8, 'bold', cLight);   doc.text(row[1][0], mid + 2, y + 6);
-    sf(9, 'normal', cText);  doc.text(row[1][1], mid + 38, y + 6);
-    y += 10;
-  });
-  y += 5;
-
-  // ════════════════════════════════════════════
-  // SECCIÓN 2 — PARÁMETROS DEL PANEL
-  // ════════════════════════════════════════════
-  checkY(40);
-  rect(ML, y, W - ML - MR, 7, cSecondary);
-  sf(10, 'bold', cWhite);
-  doc.text('2. Parámetros del Panel', ML + 3, y + 5);
-  y += 9;
-
-  const panelData = [
-    [['Acimut α', `${alpha}°  (0°=norte/sur, +este, −oeste)`], ['Inclinación β', `${beta}°  (0°=horizontal, 90°=vertical)`]],
-    [['Inclinación óptima βopt', `${betaopt.toFixed(1)}°  = 3,7 + 0,69 × |φ|`], ['', '']],
-  ];
-  panelData.forEach((row, ri) => {
-    rect(ML, y, W - ML - MR, 9, ri % 2 === 0 ? cGrayBg : [238, 242, 248]);
-    const mid = W / 2;
-    sf(8, 'bold', cLight);  doc.text(row[0][0], ML + 2, y + 6);
-    sf(8.5, 'normal', cText); doc.text(row[0][1], ML + 42, y + 6);
-    if (row[1][0]) {
-      sf(8, 'bold', cLight);    doc.text(row[1][0], mid + 2, y + 6);
-      sf(8.5, 'normal', cText); doc.text(row[1][1], mid + 42, y + 6);
-    }
-    y += 10;
-  });
-  y += 5;
-
-  // ════════════════════════════════════════════
-  // SECCIÓN 3 — DESARROLLO PASO A PASO
-  // ════════════════════════════════════════════
-  checkY(15);
-  rect(ML, y, W - ML - MR, 7, cSecondary);
-  sf(10, 'bold', cWhite);
-  doc.text('3. Desarrollo del Cálculo', ML + 3, y + 5);
-  y += 9;
-
-  const pasos = [
-    {
-      letra: 'a)',
-      titulo: 'Irradiación anual horizontal',
-      formula: `Ha(0) = Hda(0) × 365 = ${hda0} × 365 = ${Ha0.toFixed(2)} kWh/m²/año`,
-    },
-    {
-      letra: 'b)',
-      titulo: 'Inclinación óptima según latitud',
-      formula: `βopt = 3,7 + 0,69 × |φ| = 3,7 + 0,69 × ${Math.abs(lat).toFixed(4)} = ${betaopt.toFixed(2)}°`,
-    },
-    {
-      letra: 'c)',
-      titulo: 'Irradiación con inclinación óptima',
-      formula: `Ha(βopt) = Ha(0) / (1 − 4,46×10⁻⁴·βopt − 1,19×10⁻⁴·βopt²)`,
-      sub:     `= ${Ha0.toFixed(2)} / ${denom.toFixed(6)} = ${habopt.toFixed(2)} kWh/m²/año`,
-    },
-    {
-      letra: 'd)',
-      titulo: beta > 15 ? 'Factor de irradiación FI  (β > 15°)' : 'Factor de irradiación FI  (β ≤ 15°)',
-      formula: beta > 15
-        ? `FI = 1 − [1,2×10⁻⁴ × (β−βopt)² + 3,5×10⁻⁵ × α²]`
-        : `FI = 1 − 3,5×10⁻⁵ × α²`,
-      sub: beta > 15
-        ? `= 1 − [1,2×10⁻⁴ × ${Math.pow(beta - betaopt, 2).toFixed(4)} + 3,5×10⁻⁵ × ${(alpha * alpha).toFixed(4)}] = ${FI.toFixed(6)}`
-        : `= 1 − 3,5×10⁻⁵ × ${(alpha * alpha).toFixed(4)} = ${FI.toFixed(6)}`,
-    },
-    {
-      letra: 'e)',
-      titulo: 'Irradiación real sobre el plano del captador',
-      formula: `Ha(α,β) = FI × Ha(βopt) = ${FI.toFixed(6)} × ${habopt.toFixed(2)} = ${habeta.toFixed(2)} kWh/m²/año`,
-    },
-    {
-      letra: 'f)',
-      titulo: 'Pérdidas por orientación e inclinación',
-      formula: `Pérdidas M1 = (1 − Ha(α,β) / Ha(βopt)) × 100 = (1 − FI) × 100`,
-      sub:     `= (1 − ${FI.toFixed(6)}) × 100 = ${perdidas.toFixed(4)}%`,
-      highlight: true,
-    },
-  ];
-
-  pasos.forEach((p, i) => {
-    const bg = i % 2 === 0 ? cGrayBg : [238, 242, 248];
-    const rowH = p.sub ? 18 : 12;
-    checkY(rowH + 2);
-
-    rect(ML, y, W - ML - MR, rowH, p.highlight ? [225, 245, 255] : bg);
-    if (p.highlight) {
-      doc.setDrawColor(...cSecondary);
-      doc.setLineWidth(0.5);
-      doc.rect(ML, y, W - ML - MR, rowH, 'S');
-    }
-
-    // Letra
-    sf(9, 'bold', cSecondary);
-    doc.text(p.letra, ML + 2, y + 5.5);
-
-    // Título
-    sf(8, 'bold', cLight);
-    doc.text(p.titulo, ML + 10, y + 5.5);
-
-    // Fórmula
-    sf(8.5, 'normal', cText);
-    const fLines = doc.splitTextToSize(p.formula, W - ML - MR - 12);
-    doc.text(fLines, ML + 10, y + (p.sub ? 10.5 : 5.5 + (fLines.length > 1 ? 0 : 4)));
-
-    // Sub (resultado)
-    if (p.sub) {
-      sf(9, 'bold', p.highlight ? cSecondary : cText);
-      doc.text(p.sub, ML + 10, y + 15);
-    }
-
-    y += rowH + 2;
-  });
-
-  y += 4;
-
-  // ════════════════════════════════════════════
-  // SECCIÓN 4 — RESULTADO Y CRITERIO
-  // ════════════════════════════════════════════
-  checkY(60);
-  rect(ML, y, W - ML - MR, 7, cPrimary);
-  sf(10, 'bold', cWhite);
-  doc.text('4. Resultado Final', ML + 3, y + 5);
-  y += 9;
-
-  // Tres cajas: Ha(0) / Ha(βopt) / Ha(α,β)
-  const bw = (W - ML - MR - 8) / 3;
-  const bxs = [ML, ML + bw + 4, ML + 2 * (bw + 4)];
-  const cajas = [
-    { label: 'Ha(0)', val: Ha0.toFixed(2), unit: 'kWh/m²/año', col: cLight },
-    { label: 'Ha(βopt)', val: habopt.toFixed(2), unit: 'kWh/m²/año', col: cSecondary },
-    { label: 'Ha(α,β)', val: habeta.toFixed(2), unit: 'kWh/m²/año', col: [230, 126, 34] },
-  ];
-  cajas.forEach((c, i) => {
-    rect(bxs[i], y, bw, 26, cGrayBg);
-    doc.setDrawColor(...c.col); doc.setLineWidth(0.6);
-    doc.rect(bxs[i], y, bw, 26, 'S');
-    sf(7.5, 'normal', cLight); doc.text(c.label, bxs[i] + bw / 2, y + 6, { align: 'center' });
-    sf(13, 'bold', c.col);     doc.text(c.val,   bxs[i] + bw / 2, y + 17, { align: 'center' });
-    sf(7,  'normal', cLight);  doc.text(c.unit,  bxs[i] + bw / 2, y + 23, { align: 'center' });
-  });
-  y += 30;
-
-  // Badge principal: CUMPLE / NO CUMPLE
-  checkY(18);
-  const ok = perdidas <= 10;
-  const badgeCol = ok ? cGreen : cRed;
-  const badgeBg  = ok ? [232, 255, 244] : [255, 235, 235];
-  rect(ML, y, W - ML - MR, 14, badgeBg);
-  doc.setDrawColor(...badgeCol); doc.setLineWidth(0.7);
-  doc.rect(ML, y, W - ML - MR, 14, 'S');
-  sf(12, 'bold', badgeCol);
-  doc.text(
-    `${ok ? '✓' : '✗'}   Pérdidas M1 = ${perdidas.toFixed(2)}%   —   Criterio ≤ 10%: ${ok ? 'CUMPLE' : 'NO CUMPLE'}`,
-    W / 2, y + 9, { align: 'center' }
-  );
-  y += 18;
-
-  // FI y Ha(α,β) detallado
-  checkY(10);
-  rect(ML, y, W - ML - MR, 9, [240, 248, 255]);
-  doc.setDrawColor(...cSecondary); doc.setLineWidth(0.3);
-  doc.rect(ML, y, W - ML - MR, 9, 'S');
-  sf(8.5, 'normal', cText);
-  doc.text(
-    `FI = ${FI.toFixed(4)}   |   Ha(α,β) = ${habeta.toFixed(2)} kWh/m²/año   |   Ha(βopt) = ${habopt.toFixed(2)} kWh/m²/año`,
-    W / 2, y + 6, { align: 'center' }
-  );
-  y += 13;
-
-  // Nota metodológica
-  checkY(12);
-  sf(7.5, 'italic', cLight);
-  doc.text(
-    'Fórmulas: Castejón Oliva & Santamaría Herranz (2010). Irradiación: NASA POWER (ALLSKY_SFC_SW_DWN).',
-    W / 2, y, { align: 'center' }
-  );
-  y += 5;
-  sf(7.5, 'italic', cLight);
-  doc.text(
-    'Criterio: IDAE (España) y Manual de Generación Distribuida de Argentina.',
-    W / 2, y, { align: 'center' }
-  );
-
-  // ── Pie de página en todas las páginas ──
-  const totalPages = doc.internal.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p);
-    rect(0, H - 10, W, 10, cPrimary);
-    sf(7, 'normal', [180, 200, 230]);
-    doc.text('Calculadora Fotovoltaica — UTN FRC', ML, H - 4);
-    doc.text(`Página ${p} de ${totalPages}`, W - MR, H - 4, { align: 'right' });
-    doc.text('pablo-ieno.github.io/AppFVieno/', W / 2, H - 4, { align: 'center' });
-  }
-
-  // ── Nombre del archivo ──
-  const latStr = String(lat).replace('.', 'p').replace('-', 'S');
-  const lonStr = String(lon).replace('.', 'p').replace('-', 'O');
-  doc.save(`reporte_M1_lat${latStr}_lon${lonStr}_${fecha.replace(/\//g, '-')}.pdf`);
-}
-
-// ============================================================
 // INICIALIZACIÓN
 // ============================================================
 window.addEventListener('load', () => {
@@ -1976,6 +1796,14 @@ window.addEventListener('load', () => {
   addObsRow();
   addObsRow();
   addSectorRow();
+
+  // Rango de años por defecto para la consulta a NASA POWER (últimos 10 años completos)
+  const yTo = new Date().getFullYear() - 1;
+  const yFrom = yTo - 9;
+  const elFrom = document.getElementById('nasaYearFrom');
+  const elTo   = document.getElementById('nasaYearTo');
+  if(elFrom && !elFrom.value) elFrom.value = yFrom;
+  if(elTo && !elTo.value)     elTo.value   = yTo;
 
   // Registrar Service Worker (PWA) — solo en el dominio real, no en previsualizaciones
   if ('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com') {
