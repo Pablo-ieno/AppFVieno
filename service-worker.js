@@ -4,7 +4,7 @@
 // primera carga.
 // ============================================================
 
-const CACHE_NAME = 'calc-fv-v8';
+const CACHE_NAME = 'calc-fv-v9';
 
 // Archivos que se cachean en la instalación
 const PRECACHE_URLS = [

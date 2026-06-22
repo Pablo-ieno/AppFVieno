@@ -240,6 +240,48 @@
   summary { cursor: pointer; color: var(--text2); font-size: 13px; padding: 4px 0; }
   .punto-list { margin: 4px 0; font-size: 13px; color: var(--text2); }
 
+  /* ═══ TECLADO NUMÉRICO CUSTOM — cubre todos los campos numéricos en móvil ═══ */
+  #np {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 9999;
+    background: var(--surface);
+    border-top: 2px solid var(--accent);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    user-select: none; -webkit-user-select: none;
+  }
+  #np.vis { display: block; }
+  #np-head {
+    display: flex; align-items: center;
+    padding: 6px 12px; gap: 8px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    min-height: 38px;
+  }
+  #np-label { flex: 0 0 auto; font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: 0.04em; }
+  #np-val   { flex: 1; text-align: right; font-size: 18px; font-weight: 700; font-family: monospace; color: var(--text); }
+  #np-val.ph { color: var(--text3); font-weight: 400; font-size: 14px; }
+  #np-x { background: none; border: none; color: var(--text2); font-size: 22px; cursor: pointer; padding: 0 4px; }
+  #np-keys {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+  }
+  .nk {
+    background: var(--surface2); border: none; color: var(--text);
+    font-size: 20px; font-weight: 500; padding: 14px 0; line-height: 1;
+    cursor: pointer; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+  }
+  .nk:active { background: var(--border); }
+  .nk.aux   { background: var(--bg); color: var(--text2); font-size: 14px; }
+  .nk.sign  { color: var(--accent); font-size: 14px; font-weight: 700; }
+  .nk.ok    { background: var(--accent); color: #000; font-size: 15px; font-weight: 700; }
+  .nk.ok:active { opacity: 0.85; }
+  body.np-on { padding-bottom: 220px; }
+
   /* ---- AUTOCOMPLETE LOCATION SEARCH ---- */
   .location-item {
     padding: 10px 12px;
@@ -1514,16 +1556,20 @@ function addObsRow() {
   tr.id = `obs-row-${obsCount}`;
   tr.innerHTML = `
     <td style="font-weight:700;color:var(--text2);">${obsCount}</td>
-    <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-df-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
-    <td><input type="text" inputmode="decimal" id="obs-dl-${obsCount}" placeholder="+ / −" oninput="calcObsRow(${obsCount})" style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;"></td>
-    <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-do-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
-    <td><input type="number" inputmode="decimal" step="0.1" placeholder="18" id="obs-h-${obsCount}" oninput="calcObsRow(${obsCount})"></td>
+    <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-df-${obsCount}" oninput="calcObsRow(${obsCount})" data-np-label="Dist. frontal (m)"></td>
+    <td><input type="text" inputmode="decimal" id="obs-dl-${obsCount}" placeholder="+ / −" oninput="calcObsRow(${obsCount})" style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;" data-np-label="Desp. lateral (m)" data-np-neg="1"></td>
+    <td><input type="number" inputmode="decimal" step="0.1" placeholder="21" id="obs-do-${obsCount}" oninput="calcObsRow(${obsCount})" data-np-label="Dist. a obst. (m)"></td>
+    <td><input type="number" inputmode="decimal" step="0.1" placeholder="18" id="obs-h-${obsCount}" oninput="calcObsRow(${obsCount})" data-np-label="Alt. obst. (m)"></td>
     <td class="calc-cell" id="obs-az-${obsCount}">—</td>
     <td class="calc-cell" id="obs-el-${obsCount}">—</td>
     <td><button class="remove-btn" onclick="removeObsRow(${obsCount})">×</button></td>
   `;
   tbody.appendChild(tr);
   calcObsRow(obsCount);
+  // Marcar los inputs dinámicos para el numpad
+  ['obs-df-','obs-dl-','obs-do-','obs-h-'].forEach(prefix => {
+    npMarkDynamic(document.getElementById(prefix+obsCount));
+  });
 }
 
 function removeObsRow(id) {
@@ -1586,12 +1632,12 @@ function addSectorRow() {
     </td>
     <td style="padding:6px 4px;">
       <input type="number" step="0.001" min="0" placeholder="ej: 2.36" id="sec-pct-${id}"
-        oninput="recalcSectorRow(${id})"
+        oninput="recalcSectorRow(${id})" data-np-label="% pérdida (Anexo V)"
         style="width:100%;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
     </td>
     <td style="padding:6px 4px;">
       <input type="number" step="0.01" min="0" max="1" placeholder="ej: 0.75" id="sec-fr-${id}"
-        oninput="recalcSectorRow(${id})"
+        oninput="recalcSectorRow(${id})" data-np-label="fr (fracción cubierta)"
         style="width:80px;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
     </td>
     <td style="padding:6px 4px;font-family:monospace;font-weight:600;color:var(--accent);" id="sec-res-${id}">—</td>
@@ -1600,10 +1646,12 @@ function addSectorRow() {
     </td>
   `;
   tbody.appendChild(tr);
+  // Marcar inputs dinámicos para el numpad
+  npMarkDynamic(document.getElementById(`sec-pct-${id}`));
+  npMarkDynamic(document.getElementById(`sec-fr-${id}`));
 }
 
 function removeSectorRow(id) {
-  const row = document.getElementById(`sec-row-${id}`);
   if(row) { row.remove(); calcM2(); }
 }
 
@@ -2219,6 +2267,144 @@ window.addEventListener('load', () => {
       .catch(err => console.warn('SW no registrado:', err));
   }
 });
+</script>
+
+<!-- ═══ NUMPAD CUSTOM — cubre todos los campos numéricos en móvil ═══ -->
+<div id="np">
+  <div id="np-head">
+    <span id="np-label">—</span>
+    <span id="np-val" class="ph">—</span>
+    <button id="np-x" onclick="npCerrar()">✕</button>
+  </div>
+  <div id="np-keys">
+    <button class="nk" onclick="npTecla('7')">7</button>
+    <button class="nk" onclick="npTecla('8')">8</button>
+    <button class="nk" onclick="npTecla('9')">9</button>
+    <button class="nk aux" onclick="npBorrar()">⌫</button>
+
+    <button class="nk" onclick="npTecla('4')">4</button>
+    <button class="nk" onclick="npTecla('5')">5</button>
+    <button class="nk" onclick="npTecla('6')">6</button>
+    <button class="nk sign" id="np-sign" onclick="npSigno()">+/−</button>
+
+    <button class="nk" onclick="npTecla('1')">1</button>
+    <button class="nk" onclick="npTecla('2')">2</button>
+    <button class="nk" onclick="npTecla('3')">3</button>
+    <button class="nk aux" onclick="npTecla('.')">.</button>
+
+    <button class="nk aux" onclick="npLimpiar()">C</button>
+    <button class="nk" onclick="npTecla('0')">0</button>
+    <button class="nk aux" onclick="npTecla('00')">00</button>
+    <button class="nk ok" onclick="npConfirmar()">OK ✓</button>
+  </div>
+</div>
+
+<script>
+// ═══ NUMPAD CUSTOM — lógica completa ═══
+const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// IDs de campos que admiten valor negativo
+const NP_NEG_IDS = new Set([
+  'lat','lon','alpha',
+  'm3-ta','m3-ta-isc','m3-beta','m3-alpha','m3-gamma'
+]);
+
+// Campos fijos (estáticos en el HTML) que usa el numpad
+const NP_FIXED_IDS = [
+  'lat','lon','nasaYearFrom','nasaYearTo','hda0','alpha','beta','h-panel',
+  'm3-ta','m3-ta-isc','m3-g','m3-tonc',
+  'm3-voc','m3-isc','m3-pmpp','m3-beta','m3-alpha','m3-gamma',
+  'm3-nserie','m3-nparalelo',
+  'm3-pinv','m3-uinvmax','m3-iinvmax','m3-mpptmin','m3-mpptmax'
+];
+
+let npEl  = null;
+let npVal = '';
+
+function npAbrir(el) {
+  if (!IS_TOUCH) return;
+  npEl  = el;
+  npVal = el.value.trim();
+  const allowNeg = NP_NEG_IDS.has(el.id) || el.dataset.npNeg === '1';
+  document.getElementById('np-label').textContent = el.dataset.npLabel || el.labels?.[0]?.textContent?.trim() || '—';
+  document.getElementById('np-sign').style.visibility = allowNeg ? 'visible' : 'hidden';
+  npRefrescar();
+  document.getElementById('np').classList.add('vis');
+  document.body.classList.add('np-on');
+  setTimeout(() => el.scrollIntoView({ behavior:'smooth', block:'center' }), 60);
+}
+
+function npCerrar() {
+  if (npEl) {
+    npEl.value = npVal;
+    npEl.dispatchEvent(new Event('input',  { bubbles:true }));
+    npEl.dispatchEvent(new Event('change', { bubbles:true }));
+  }
+  document.getElementById('np').classList.remove('vis');
+  document.body.classList.remove('np-on');
+  npEl = null;
+}
+
+function npConfirmar() { npCerrar(); }
+
+function npTecla(ch) {
+  if (ch === '.' && npVal.includes('.')) return;
+  if (ch === '00' && (npVal === '' || npVal === '-')) return;
+  if (ch === '0' && (npVal === '0' || npVal === '-0')) { npVal += '.'; npRefrescar(); return; }
+  npVal += ch;
+  npRefrescar();
+}
+
+function npBorrar()  { npVal = npVal.slice(0,-1); npRefrescar(); }
+function npLimpiar() { npVal = ''; npRefrescar(); }
+
+function npSigno() {
+  if (npVal.startsWith('-')) npVal = npVal.slice(1);
+  else if (npVal && npVal !== '0') npVal = '-' + npVal;
+  else npVal = '-';
+  npRefrescar();
+}
+
+function npRefrescar() {
+  const v = document.getElementById('np-val');
+  if (!npVal || npVal === '-') {
+    v.textContent = npVal || '—';
+    v.classList.add('ph');
+  } else {
+    v.textContent = npVal;
+    v.classList.remove('ph');
+  }
+  if (npEl) npEl.value = npVal;
+}
+
+// ─── Inicialización: bloquear teclado nativo en táctil ───
+window.addEventListener('load', () => {
+  if (!IS_TOUCH) return;
+
+  // Poner readonly a todos los campos fijos para bloquear el teclado nativo
+  NP_FIXED_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.readOnly = true;
+  });
+
+  // Delegado global en fase de captura — intercepta ANTES del foco nativo
+  document.addEventListener('touchstart', e => {
+    const el = e.target;
+    if (el.tagName !== 'INPUT') return;
+    // Solo campos marcados (readOnly puesto por nosotros, o dataset.np)
+    if (!el.readOnly && el.dataset.np !== '1') return;
+    e.preventDefault();
+    e.stopPropagation();
+    npAbrir(el);
+  }, { capture: true, passive: false });
+});
+
+// ─── Para filas dinámicas (obstáculos y sectores) ───
+// Llamar npMarkDynamic(el) al crear cada input dinámico
+function npMarkDynamic(el) {
+  if (!el || !IS_TOUCH) return;
+  el.readOnly = true;
+}
 </script>
 
 </body>
